@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Le mie case</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B4E;--navy2:#1A4A7A;--navy3:#2B6CB0;
+  --gold:#C9973A;--gold2:#F0C060;
+  --white:#fff;--off:#F8FAFD;--bg:#F2F6FC;
+  --text:#0D1F3C;--text2:#4A6080;--text3:#8AA0BC;
+  --border:#D0DCF0;--radius:14px;--radiuslg:22px;
+  --shadow:0 4px 24px rgba(13,43,78,.09);
+  --shadowlg:0 12px 48px rgba(13,43,78,.16);
+  --green:#16a34a;--green-light:#dcfce7;
+  --orange:#ea580c;--orange-light:#ffedd5;
+  --red:#dc2626;--red-light:#fee2e2;
+  --blue-light:#dbeafe;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+a{text-decoration:none;color:inherit}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--navy);padding:12px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px}
+.tb-logo span{color:var(--gold2)}
+.tb-right{display:flex;align-items:center;gap:12px}
+.tb-user{display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.8);font-size:13px}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--navy)}
+
+/* ── LAYOUT ── */
+.container{max-width:1100px;margin:0 auto;padding:28px 24px}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.stat-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;color:var(--navy);line-height:1}
+.stat-sub{font-size:12px;color:var(--text2);margin-top:4px}
+.stat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.dot-green{background:var(--green)}
+.dot-orange{background:var(--orange)}
+.dot-navy{background:var(--navy)}
+
+/* ── MAIN GRID ── */
+.main-grid{display:grid;grid-template-columns:1fr 340px;gap:24px}
+
+/* ── PROPERTIES LIST ── */
+.section-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.btn-small{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:600;cursor:pointer;color:var(--navy);font-family:'DM Sans',sans-serif;transition:all .18s}
+.btn-small:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-primary:hover{background:var(--navy2)}
+
+.prop-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:14px;overflow:hidden;transition:box-shadow .2s}
+.prop-card:hover{box-shadow:var(--shadowlg)}
+.prop-header{padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer}
+.prop-thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;background:var(--bg);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px}
+.prop-info{flex:1}
+.prop-name{font-weight:600;font-size:15px;color:var(--navy);margin-bottom:2px}
+.prop-addr{font-size:12px;color:var(--text2)}
+.prop-badges{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-orange{background:var(--orange-light);color:var(--orange)}
+.badge-blue{background:var(--blue-light);color:var(--navy2)}
+.badge-gray{background:var(--bg);color:var(--text2)}
+.prop-actions{display:flex;gap:8px;align-items:center}
+.icon-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--off);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;flex-shrink:0}
+.icon-btn:hover{background:var(--navy);border-color:var(--navy)}
+.icon-btn:hover svg{stroke:#fff}
+.icon-btn svg{width:15px;height:15px;stroke:var(--text2);fill:none;stroke-width:2;stroke-linecap:round}
+
+/* ── BOOKINGS MINI ── */
+.prop-bookings{border-top:1px solid var(--border);padding:12px 20px;display:none}
+.prop-bookings.open{display:block}
+.booking-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.booking-row:last-child{border-bottom:none}
+.booking-source{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.src-airbnb{background:#FF5A5F22;color:#FF5A5F}
+.src-booking{background:#003B9522;color:#003B95}
+.src-manual{background:#16a34a22;color:var(--green)}
+.booking-guest{font-weight:500;flex:1;color:var(--text)}
+.booking-dates{color:var(--text2);font-size:12px}
+.booking-nights{font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--blue-light);color:var(--navy2)}
+
+/* ── CALENDAR ── */
+.calendar-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:20px;margin-bottom:20px}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.cal-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--navy)}
+.cal-nav{display:flex;gap:4px}
+.cal-nav button{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--off);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .18s}
+.cal-nav button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day-name{text-align:center;font-size:10px;font-weight:600;color:var(--text3);padding:4px 0;text-transform:uppercase;letter-spacing:.07em}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;position:relative}
+.cal-day:hover{background:var(--blue-light)}
+.cal-day.today{background:var(--navy);color:#fff;font-weight:700}
+.cal-day.occupied{background:#FF5A5F22;color:#c0392b}
+.cal-day.occupied-b{background:#003B9522;color:#003B95}
+.cal-day.free{color:var(--text2)}
+.cal-day.empty{opacity:0}
+.cal-day.occupied-m{background:#16a34a22;color:#15803d}
+.cal-day.multi{background:linear-gradient(135deg,#FF5A5F22 50%,#003B9522 50%)}
+
+/* ── ICAL SETUP ── */
+.ical-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:20px}
+.ical-title{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.ical-sub{font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6}
+.ical-row{margin-bottom:10px}
+.ical-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:4px}
+.ical-input-row{display:flex;gap:8px}
+.ical-input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--off);outline:none;transition:border .2s}
+.ical-input:focus{border-color:var(--navy3);background:var(--white)}
+.ical-source{display:flex;align-items:center;gap:6px;margin-top:8px}
+.ical-source-btn{padding:5px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--off);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;font-family:'DM Sans',sans-serif}
+.ical-source-btn.active-airbnb{background:#FF5A5F;color:#fff;border-color:#FF5A5F}
+.ical-source-btn.active-booking{background:#003B95;color:#fff;border-color:#003B95}
+.ical-source-btn:not(.active-airbnb):not(.active-booking):hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sync-btn{width:100%;padding:10px;border-radius:10px;background:var(--navy);color:#fff;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px;transition:opacity .18s;display:flex;align-items:center;justify-content:center;gap:7px}
+.sync-btn:hover{opacity:.88}
+.sync-btn svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+.last-sync{font-size:11px;color:var(--text3);text-align:center;margin-top:8px}
+
+/* ── QUICK STATS BAR ── */
+.timeline{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:16px 20px;margin-bottom:20px}
+.tl-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px}
+.tl-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.tl-row:last-child{margin-bottom:0}
+.tl-name{font-size:12px;font-weight:500;color:var(--text);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-bar-wrap{flex:1;height:20px;background:var(--bg);border-radius:6px;overflow:hidden;display:flex}
+.tl-segment{height:100%;transition:width .3s}
+.tl-seg-occ{background:#FF5A5F88}
+.tl-seg-free{background:var(--bg)}
+.tl-seg-book{background:#003B9588}
+.tl-pct{font-size:11px;font-weight:600;color:var(--text2);width:32px;text-align:right;flex-shrink:0}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(13,43,78,.7);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--radiuslg);padding:32px;max-width:480px;width:100%;box-shadow:var(--shadowlg)}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.6}
+.form-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:5px}
+.form-input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--off);outline:none;margin-bottom:14px;transition:border .2s}
+.form-input:focus{border-color:var(--navy3);background:var(--white)}
+.form-row{display:flex;gap:10px}
+.form-row .form-input{flex:1}
+.modal-actions{display:flex;gap:10px;margin-top:8px}
+.modal-btn{flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;transition:all .18s}
+.modal-btn-primary{background:var(--navy);color:#fff}
+.modal-btn-primary:hover{background:var(--navy2)}
+.modal-btn-secondary{background:var(--off);color:var(--text2);border:1px solid var(--border)}
+.modal-btn-secondary:hover{background:var(--bg)}
+
+/* ── MANUAL BOOKING ── */
+.mbooking-form{padding:16px 20px;border-top:1px solid var(--border);background:var(--off);display:none}
+.mbooking-form.open{display:block}
+.mb-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.mb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.mb-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:4px}
+.mb-input{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--white);outline:none;transition:border .2s;box-sizing:border-box}
+.mb-input:focus{border-color:var(--navy3)}
+.mb-actions{display:flex;gap:8px;margin-top:4px}
+.mb-btn{flex:1;padding:9px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;transition:all .18s}
+.mb-btn-save{background:var(--navy);color:#fff}
+.mb-btn-save:hover{background:var(--navy2)}
+.mb-btn-cancel{background:var(--white);color:var(--text2);border:1px solid var(--border)}
+.mb-btn-cancel:hover{background:var(--bg)}
+.booking-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:0 4px;line-height:1;transition:color .15s}
+.booking-del:hover{color:var(--red)}
+/* ── HOTEL ── */
+.hotel-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
+.hotel-header{padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;background:linear-gradient(135deg,#0D2B4E 0%,#1A4A7A 100%);color:#fff}
+.hotel-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#fff;margin-bottom:2px}
+.hotel-addr{font-size:12px;color:rgba(255,255,255,.65)}
+.hotel-stats{margin-left:auto;text-align:right}
+.hotel-occ{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:#fff;line-height:1}
+.hotel-occ-label{font-size:11px;color:rgba(255,255,255,.6)}
+.rooms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.room-cell{background:var(--white);padding:14px 16px;position:relative;cursor:pointer;transition:background .15s}
+.room-cell:hover{background:var(--off)}
+.room-num{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:3px}
+.room-type{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:6px}
+.room-status{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;display:inline-block}
+.rs-free{background:var(--green-light);color:var(--green)}
+.rs-occ{background:#fee2e2;color:var(--red)}
+.rs-checkin{background:var(--orange-light);color:var(--orange)}
+.rs-checkout{background:var(--blue-light);color:var(--navy2)}
+.room-guest{font-size:11px;color:var(--text2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-dates{font-size:10px;color:var(--text3);margin-top:2px}
+.room-add-btn{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:6px;background:var(--green-light);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:14px;color:var(--green);font-weight:700;line-height:1}
+.room-cell:hover .room-add-btn{display:flex}
+.hotel-actions{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--off)}
+/* room booking modal */
+.room-modal{display:none;position:fixed;inset:0;background:rgba(13,43,78,.7);z-index:600;align-items:center;justify-content:center;padding:20px}
+.room-modal.open{display:flex}
+/* ── EDIT PROPERTY MODAL ── */
+.edit-prop-modal{display:none;position:fixed;inset:0;background:rgba(13,43,78,.7);z-index:700;align-items:center;justify-content:center;padding:20px}
+.edit-prop-modal.open{display:flex}
+
+/* ── EARNINGS ── */
+.earnings-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.earnings-row:last-child{border-bottom:none}
+.earn-label{flex:1;font-weight:500;color:var(--text)}
+.earn-val{font-weight:700;color:var(--navy);font-size:14px}
+.earn-input{width:90px;padding:5px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;text-align:right;outline:none;transition:border .2s}
+.earn-input:focus{border-color:var(--navy3)}
+.earn-total{background:var(--navy);color:#fff;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.earn-total-label{font-size:12px;font-weight:600;opacity:.8}
+.earn-total-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600}
+
+/* ── NOTIFICATIONS ── */
+.notif-banner{background:linear-gradient(135deg,#C9973A,#F0C060);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:none}
+.notif-banner.has-notifs{display:block}
+.notif-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:8px}
+.notif-item{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;color:var(--navy);border-bottom:1px solid rgba(13,43,78,.15)}
+.notif-item:last-child{border-bottom:none}
+.notif-emoji{font-size:16px;flex-shrink:0}
+.notif-text{flex:1;font-weight:500}
+.notif-days{font-size:11px;font-weight:700;background:var(--navy);color:#fff;padding:2px 8px;border-radius:10px}
+
+/* ── COSTS ── */
+.costs-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.costs-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.cost-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cost-label-input{flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--off);outline:none}
+.cost-label-input:focus{border-color:var(--navy3);background:var(--white)}
+.cost-amount-input{width:80px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;text-align:right;outline:none;background:var(--off)}
+.cost-amount-input:focus{border-color:var(--navy3);background:var(--white)}
+.cost-type-badge{font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;flex-shrink:0;cursor:pointer;border:none;font-family:'DM Sans',sans-serif}
+.ct-fixed{background:#dbeafe;color:#1d4ed8}
+.ct-variable{background:#fef9c3;color:#854d0e}
+.ct-extra{background:#fee2e2;color:#991b1b}
+.ct-commission{background:#f3e8ff;color:#6b21a8}
+.cost-del-btn{width:22px;height:22px;border-radius:6px;border:none;background:#fee2e2;color:#991b1b;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.add-cost-btn{width:100%;padding:7px;border-radius:8px;background:transparent;border:1.5px dashed var(--border);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;margin-top:4px}
+.add-cost-btn:hover{border-color:var(--navy);color:var(--navy);background:#EEF6FF}
+.pnl-box{border-radius:12px;padding:14px 16px;margin-top:12px}
+.pnl-positive{background:var(--green-light)}
+.pnl-negative{background:#fee2e2}
+.pnl-neutral{background:var(--bg)}
+.pnl-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:4px}
+.pnl-row:last-child{margin-bottom:0;font-weight:700;font-size:15px;padding-top:8px;border-top:1px solid rgba(0,0,0,.08)}
+.pnl-green{color:var(--green)}
+.pnl-red{color:var(--red)}
+.pnl-label{color:var(--text2)}
+/* cost type selector */
+.cost-type-sel{font-size:11px;padding:4px 7px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;background:var(--off);outline:none;cursor:pointer;color:var(--text)}
+/* ── CHECKIN PANEL ── */
+.checkin-panel{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:20px;margin-bottom:20px}
+.checkin-entry{border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:var(--off);transition:box-shadow .2s}
+.checkin-entry:hover{box-shadow:var(--shadow)}
+.ci-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ci-name{font-weight:600;font-size:14px;color:var(--navy)}
+.ci-time{font-size:11px;color:var(--text3)}
+.ci-details{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text2)}
+.ci-badge{padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.ci-new{background:var(--green-light);color:var(--green)}
+.ci-read{background:var(--bg);color:var(--text3)}
+.ci-actions{display:flex;gap:6px;margin-top:10px}
+.ci-btn{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--white);font-family:'DM Sans',sans-serif;transition:all .18s}
+.ci-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ci-btn-del{color:var(--red);border-color:#fecaca}
+.ci-btn-del:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.ci-firma{max-width:200px;border:1px solid var(--border);border-radius:6px;margin-top:6px;display:none}
+.qr-wrap{text-align:center;padding:16px;background:var(--bg);border-radius:10px;margin-top:12px}
+.qr-link{font-size:12px;color:var(--navy2);word-break:break-all;margin-top:6px}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;transition:transform .3s;z-index:999;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+@media(max-width:768px){
+  .main-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .container{padding:16px}
+}
+</style>
+
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="tb-logo">🏠 Casa<span>Manager</span></div>
+  <div class="tb-right">
+    <div style="font-size:11px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:5px">
+      <span style="width:6px;height:6px;border-radius:50%;background:#16a34a;display:inline-block"></span>
+      <span id="lastFirebaseSync">Connessione Firebase...</span>
+    </div>
+    <div class="tb-user">
+      <div class="tb-avatar">F</div>
+      <span>Fabrizio</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="notif-banner" id="notifBanner">
+  <div class="notif-title">🔔 Prossimi arrivi</div>
+  <div id="notifList"></div>
+</div>
+<div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Case gestite</div>
+      <div class="stat-value" id="statCase">4</div>
+      <div class="stat-sub">attive su Airbnb/Booking</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Occupate oggi</div>
+      <div class="stat-value" style="color:var(--green)" id="statOcc">2</div>
+      <div class="stat-sub"><span class="stat-dot dot-green"></span>ospiti presenti</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Check-in oggi</div>
+      <div class="stat-value" style="color:var(--gold)" id="statCheckin">1</div>
+      <div class="stat-sub"><span class="stat-dot dot-orange"></span>arrivo previsto</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Libere oggi</div>
+      <div class="stat-value" style="color:var(--navy3)" id="statFree">1</div>
+      <div class="stat-sub"><span class="stat-dot dot-navy"></span>disponibili</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT: PROPERTIES -->
+    <div>
+      <div class="section-title">
+        Le mie proprietà
+        <button class="btn-small btn-primary" onclick="openModal()">+ Aggiungi casa</button>
+      </div>
+
+      <!-- PROPERTY CARDS -->
+      <div id="propList"></div>
+    </div>
+
+    <!-- RIGHT: CALENDAR + ICAL -->
+    <div>
+
+      <!-- OCCUPANCY BAR -->
+      <div class="timeline">
+        <div class="tl-title">Occupazione — prossimi 30 giorni</div>
+        <div id="timelineRows"></div>
+      </div>
+
+      <!-- MINI CALENDAR -->
+      <div class="calendar-card">
+        <div class="cal-header">
+          <div class="cal-title" id="calTitle"></div>
+          <div class="cal-nav">
+            <button onclick="changeMonth(-1)">‹</button>
+            <button onclick="changeMonth(1)">›</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div style="margin-top:12px;display:flex;gap:12px;font-size:11px;color:var(--text2)">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#FF5A5F44;margin-right:4px"></span>Airbnb</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#003B9544;margin-right:4px"></span>Booking</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#16a34a44;margin-right:4px"></span>Diretta</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--navy);margin-right:4px"></span>Oggi</span>
+        </div>
+      </div>
+
+      <!-- ICAL SETUP -->
+      <div class="calendar-card" id="earningsCard" style="margin-bottom:20px">
+  <div class="cal-header">
+    <div class="cal-title">📊 Entrate & Uscite</div>
+    <select id="earningsMonth" onchange="renderEarnings()" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--off);outline:none">
+      <option value="0">Gennaio</option><option value="1">Febbraio</option>
+      <option value="2">Marzo</option><option value="3">Aprile</option>
+      <option value="4">Maggio</option><option value="5">Giugno</option>
+      <option value="6">Luglio</option><option value="7">Agosto</option>
+      <option value="8">Settembre</option><option value="9">Ottobre</option>
+      <option value="10">Novembre</option><option value="11">Dicembre</option>
+    </select>
+  </div>
+  <!-- Property selector -->
+  <div style="margin-bottom:12px">
+    <select id="earningsProp" onchange="renderEarnings()" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--off);outline:none">
+      <option value="all">Tutte le strutture</option>
+    </select>
+  </div>
+  <div id="earningsList"></div>
+</div>
+<div class="checkin-panel" id="checkinPanel">
+  <div class="cal-header" style="margin-bottom:12px">
+    <div class="cal-title">📋 Pre Check-in ricevuti</div>
+    <button class="btn-small" id="checkinCount" onclick="toggleCheckinPanel()">0 nuovi</button>
+  </div>
+  <div id="checkinList"><div style="font-size:13px;color:var(--text3)">Nessun modulo ricevuto ancora.</div></div>
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px">🔗 Link modulo per ospiti</div>
+    <div id="checkinLinks"></div>
+  </div>
+</div>
+<div class="ical-card">
+        <div class="ical-title">🔗 Collega i calendari</div>
+        <div class="ical-sub">Incolla il link iCal di Airbnb o Booking.com per sincronizzare le prenotazioni automaticamente.</div>
+
+        <div class="ical-row">
+          <div class="ical-label">Casa da collegare</div>
+          <select class="form-input" id="icalProp" style="margin-bottom:0;padding:8px 12px">
+            <option value="">Seleziona casa...</option>
+          </select>
+        </div>
+
+        <div class="ical-row">
+          <div class="ical-label">Sorgente</div>
+          <div class="ical-source">
+            <button class="ical-source-btn" id="btnAirbnb" onclick="selectSource('airbnb')">Airbnb</button>
+            <button class="ical-source-btn" id="btnBooking" onclick="selectSource('booking')">Booking.com</button>
+          </div>
+        </div>
+
+        <div class="ical-row">
+          <div class="ical-label">Link iCal</div>
+          <div class="ical-input-row">
+            <input class="ical-input" id="icalUrl" type="text" placeholder="https://www.airbnb.com/calendar/ical/...">
+          </div>
+        </div>
+
+        <button class="sync-btn" onclick="saveIcal()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Salva e sincronizza
+        </button>
+        <div class="last-sync" id="lastSync"></div>
+
+        <div style="margin-top:14px;padding:12px;background:var(--bg);border-radius:10px;font-size:12px;color:var(--text2);line-height:1.7">
+          <strong style="color:var(--navy);display:block;margin-bottom:4px">Come trovare il link iCal:</strong>
+          <strong>Airbnb:</strong> Calendario → Esporta calendario → Copia link<br>
+          <strong>Booking:</strong> Extranet → Calendario → Sincronizza → Link iCal
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGGIUNGI CASA -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Aggiungi una casa</div>
+    <div class="modal-sub">Inserisci i dati della proprietà. Potrai collegare i calendari dopo.</div>
+    <div class="form-label">Nome della casa</div>
+    <input class="form-input" id="newName" type="text" placeholder="es. Casa Duna">
+    <div class="form-label">Indirizzo</div>
+    <input class="form-input" id="newAddr" type="text" placeholder="es. Via Arezzo 64, Donnalucata">
+    <div class="form-label">Emoji / icona</div>
+    <div class="form-row" style="flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🏠')">🏠</span>
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🏡')">🏡</span>
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🏖️')">🏖️</span>
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🌊')">🌊</span>
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🌴')">🌴</span>
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🏔️')">🏔️</span>
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🏰')">🏰</span>
+      <span style="cursor:pointer;font-size:22px" onclick="selectEmoji(this,'🌺')">🌺</span>
+    </div>
+    <input type="hidden" id="newEmoji" value="🏠">
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Annulla</button>
+      <button class="modal-btn modal-btn-primary" onclick="addProperty()">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- EDIT PROPERTY MODAL -->
+<div class="edit-prop-modal" id="editPropModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title" id="ep-title">Modifica casa</div>
+    <input type="hidden" id="ep-id">
+    <div class="form-label">Nome</div>
+    <input class="form-input" id="ep-name" type="text" placeholder="es. Casa Duna">
+    <div class="form-label">Indirizzo</div>
+    <input class="form-input" id="ep-addr" type="text" placeholder="es. Via Arezzo 64, Donnalucata">
+    <div class="form-label">Emoji</div>
+    <input class="form-input" id="ep-emoji" type="text" placeholder="🏖️" style="font-size:22px;width:80px;text-align:center">
+    <div class="modal-actions" style="margin-top:8px">
+      <button class="modal-btn modal-btn-secondary" onclick="deleteProperty(parseInt(document.getElementById('ep-id').value))" style="background:#fee2e2;color:var(--red);border-color:#fecaca;flex:0.6">🗑 Elimina</button>
+      <button class="modal-btn modal-btn-secondary" onclick="closeEditPropModal()">Annulla</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveEditProperty()">✓ Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM BOOKING MODAL -->
+<div class="room-modal" id="roomModal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title" id="rm-title">Nuova prenotazione camera</div>
+    <div class="modal-sub">Inserisci i dettagli della prenotazione</div>
+
+    <div class="form-label">Camera</div>
+    <select class="form-input" id="rm-room" style="margin-bottom:14px"></select>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <div class="form-label">Nome ospite</div>
+        <input class="form-input" id="rm-guest" type="text" placeholder="Mario Rossi">
+      </div>
+      <div>
+        <div class="form-label">Telefono / Email</div>
+        <input class="form-input" id="rm-contact" type="text" placeholder="+39 333...">
+      </div>
+      <div>
+        <div class="form-label">Arrivo</div>
+        <input class="form-input" id="rm-from" type="date">
+      </div>
+      <div>
+        <div class="form-label">Partenza</div>
+        <input class="form-input" id="rm-to" type="date">
+      </div>
+    </div>
+
+    <div class="form-label" style="margin-top:4px">Fonte prenotazione</div>
+    <select class="form-input" id="rm-source" style="margin-bottom:10px">
+      <option value="direct">Diretta</option>
+      <option value="airbnb">Airbnb</option>
+      <option value="booking">Booking.com</option>
+    </select>
+
+    <div class="form-label">Note (acconto, richieste...)</div>
+    <input class="form-input" id="rm-notes" type="text" placeholder="es. Acconto €150 ricevuto, culla richiesta">
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="modal-btn modal-btn-secondary" onclick="closeRoomModal()">Annulla</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveRoomBooking()">✓ Salva prenotazione</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── LOCAL DATE HELPER (must be first) ──
+function todayStr() {
+  var d = new Date();
+  var y = d.getFullYear();
+  var m = String(d.getMonth()+1).padStart(2,'0');
+  var day = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + day;
+}
+
+// ── DATA ──
+var DASHBOARD_VER = 'v6';
+if (localStorage.getItem('dashboard_ver') !== DASHBOARD_VER) {
+  localStorage.removeItem('cm_props');
+  localStorage.setItem('dashboard_ver', DASHBOARD_VER);
+}
+
+// Always strip airbnb/booking bookings from localStorage saved properties
+// so Firebase is always the source of truth for platform bookings
+var _savedProps = localStorage.getItem('cm_props');
+if (_savedProps) {
+  try {
+    var _parsed = JSON.parse(_savedProps);
+    _parsed.forEach(function(p) {
+      if (p.type === 'hotel') {
+        if (p.rooms) p.rooms.forEach(function(r) {
+          if (r.bookings) r.bookings = r.bookings.filter(function(b){ 
+            return b.source !== 'airbnb' && b.source !== 'booking'; 
+          });
+        });
+      } else {
+        if (p.bookings) p.bookings = p.bookings.filter(function(b){ 
+          return b.source !== 'airbnb' && b.source !== 'booking'; 
+        });
+      }
+    });
+    localStorage.setItem('cm_props', JSON.stringify(_parsed));
+  } catch(e) {}
+}
+
+var properties = JSON.parse(localStorage.getItem('cm_props') || 'null') || [
+  {id:1, name:'Terrazza sul mare', addr:'Donnalucata', emoji:'🏖️',
+   type:'house', airbnbUrl:'', bookingUrl:'',
+   bookings:[]},
+  {id:2, name:'Villa Gió', addr:'Sampieri', emoji:'🌺',
+   type:'house', airbnbUrl:'', bookingUrl:'',
+   bookings:[]},
+  {id:3, name:'Donnamisurata', addr:'Sampieri', emoji:'🏡',
+   type:'house', airbnbUrl:'', bookingUrl:'',
+   bookings:[]},
+  {id:4, name:'Casa Duna', addr:'Via Arezzo 64, Donnalucata', emoji:'🌊',
+   type:'house', airbnbUrl:'', bookingUrl:'',
+   bookings:[]},
+  {id:5, name:'Hotel San Bart', addr:'Via San Bartolomeo 12, Donnalucata', emoji:'🏨',
+   type:'hotel',
+   rooms:[
+     {num:1, name:'Bartolomeo', type:'Matrimoniale', bookings:[]},
+     {num:2, name:'Ignazio', type:'Matrimoniale', bookings:[]},
+     {num:3, name:'Rosario', type:'Matrimoniale', bookings:[]},
+     {num:4, name:'Guglielmo', type:'Matrimoniale', bookings:[]},
+     {num:5, name:'Guglielmino', type:'Matrimoniale', bookings:[]},
+     {num:6, name:'Carmine', type:'Matrimoniale', bookings:[]},
+   ]},
+];
+
+var selectedSource = 'airbnb';
+var selectedEmoji = '🏠';
+var currentMonth = new Date().getMonth();
+var currentYear = new Date().getFullYear();
+
+function save() {
+  // Save properties but strip airbnb/booking bookings (those come from Firebase)
+  var toSave = properties.map(function(p) {
+    var copy = Object.assign({}, p);
+    if (p.type === 'hotel') {
+      copy.rooms = p.rooms.map(function(r) {
+        var rc = Object.assign({}, r);
+        rc.bookings = (r.bookings || []).filter(function(b){ 
+          return b.source !== 'airbnb' && b.source !== 'booking'; 
+        });
+        return rc;
+      });
+    } else {
+      copy.bookings = (p.bookings || []).filter(function(b){ 
+        return b.source !== 'airbnb' && b.source !== 'booking'; 
+      });
+    }
+    return copy;
+  });
+  localStorage.setItem('cm_props', JSON.stringify(toSave));
+}
+
+// ── RENDER PROPERTIES ──
+function renderProperties() {
+  var list = document.getElementById('propList');
+  list.innerHTML = '';
+  var today = todayStr();
+
+  properties.forEach(function(p) {
+    if (p.type === 'hotel') { list.appendChild(renderHotelCard(p, today)); return; }
+    // Check status
+    var status = 'free';
+    var todayBooking = null;
+    var nextBooking = null;
+
+    p.bookings.forEach(function(b) {
+      if (b.from <= today && b.to > today) { status='occupied'; todayBooking=b; }
+      else if (b.from > today && (!nextBooking || b.from < nextBooking.from)) nextBooking = b;
+    });
+    // check-in today
+    p.bookings.forEach(function(b) { if (b.from === today) status = 'checkin'; });
+
+    var statusBadge = status === 'occupied'
+      ? '<span class="badge badge-green">🟢 Occupata</span>'
+      : status === 'checkin'
+      ? '<span class="badge badge-orange">🔑 Check-in oggi</span>'
+      : '<span class="badge badge-blue">✓ Libera</span>';
+
+    var sourceBadges = '';
+    if (p.airbnbUrl) sourceBadges += '<span class="badge" style="background:#FF5A5F22;color:#FF5A5F">Airbnb ✓</span>';
+    if (p.bookingUrl) sourceBadges += '<span class="badge" style="background:#003B9522;color:#003B95">Booking ✓</span>';
+    if (!p.airbnbUrl && !p.bookingUrl) sourceBadges += '<span class="badge badge-gray">Nessun calendario</span>';
+
+    var nextInfo = nextBooking
+      ? '<span class="badge badge-gray" style="font-size:11px">Prossimo: '+formatDate(nextBooking.from)+'</span>'
+      : '';
+
+    var div = document.createElement('div');
+    div.className = 'prop-card';
+    div.innerHTML = 
+      '<div class="prop-header" onclick="toggleBookings('+p.id+')">' +
+        '<div class="prop-thumb">'+p.emoji+'</div>' +
+        '<div class="prop-info">' +
+          '<div class="prop-name">'+p.name+'</div>' +
+          '<div class="prop-addr">'+p.addr+'</div>' +
+          '<div class="prop-badges">'+statusBadge+sourceBadges+nextInfo+'</div>' +
+        '</div>' +
+        '<div class="prop-actions">' +
+          '<div class="icon-btn" onclick="event.stopPropagation();openGuide('+p.id+')" title="Apri guida">' +
+            '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+          '</div>' +
+          '<div class="icon-btn" onclick="event.stopPropagation();editProperty('+p.id+')" title="Modifica">' +
+            '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>' +
+          '</div>' +
+          '<div class="icon-btn" style="font-size:16px" title="Espandi">›</div>' +
+          '<div class="icon-btn" style="background:#16a34a;border-color:#16a34a" onclick="event.stopPropagation();toggleMBooking('+p.id+')" title="Aggiungi prenotazione manuale">' +
+            '<svg viewBox="0 0 24 24" style="stroke:#fff"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prop-bookings" id="bookings-'+p.id+'">' +
+        renderBookings(p) +
+      '</div>' +
+      '<div class="mbooking-form" id="mbooking-'+p.id+'">' +
+        '<div class="mb-title">📝 Nuova prenotazione diretta</div>' +
+        '<div class="mb-grid">' +
+          '<div><div class="mb-label">Nome ospite</div><input class="mb-input" id="mb-guest-'+p.id+'" type="text" placeholder="Mario Rossi"></div>' +
+          '<div><div class="mb-label">Telefono / Email</div><input class="mb-input" id="mb-contact-'+p.id+'" type="text" placeholder="+39 333..."></div>' +
+          '<div><div class="mb-label">Arrivo</div><input class="mb-input" id="mb-from-'+p.id+'" type="date"></div>' +
+          '<div><div class="mb-label">Partenza</div><input class="mb-input" id="mb-to-'+p.id+'" type="date"></div>' +
+        '</div>' +
+        '<div><div class="mb-label">Note (acconto, richieste...)</div><input class="mb-input" id="mb-notes-'+p.id+'" type="text" placeholder="es. Acconto €200 ricevuto"></div>' +
+        '<div class="mb-actions" style="margin-top:10px">' +
+          '<button class="mb-btn mb-btn-cancel" onclick="toggleMBooking('+p.id+')">Annulla</button>' +
+          '<button class="mb-btn mb-btn-save" onclick="saveManualBooking('+p.id+')">✓ Salva prenotazione</button>' +
+        '</div>' +
+      '</div>';
+    list.appendChild(div);
+  });
+
+  renderEarnings();
+  renderNotifications();
+  renderTimeline();
+  renderCalendar();
+  updateStats();
+  updateIcalSelect();
+}
+
+function renderBookings(p) {
+  if (!p.bookings.length) return '<p style="font-size:13px;color:var(--text3);padding:4px 0">Nessuna prenotazione registrata</p>';
+  var today = todayStr();
+  var sorted = p.bookings.slice().sort(function(a,b){ return a.from > b.from ? 1 : -1; });
+  return sorted.map(function(b,i) {
+    var isPast = b.to < today;
+    var srcClass = b.source==='airbnb' ? 'src-airbnb' : b.source==='booking' ? 'src-booking' : 'src-manual';
+    var srcLabel = b.source==='airbnb' ? 'A' : b.source==='booking' ? 'B' : 'M';
+    var notes = b.notes ? '<span style="font-size:11px;color:var(--text3);margin-left:4px">· '+b.notes+'</span>' : '';
+    var delBtn = b.source==='manual'
+      ? '<button class="booking-del" onclick="deleteBooking('+p.id+','+i+')">✕</button>'
+      : '';
+    return '<div class="booking-row" style="'+(isPast?'opacity:.45':'')+'">'+
+      '<div class="booking-source '+srcClass+'">'+srcLabel+'</div>'+
+      '<div class="booking-guest">'+b.guest+notes+'</div>'+
+      '<div class="booking-dates">'+formatDate(b.from)+' → '+formatDate(b.to)+'</div>'+
+      '<span class="booking-nights">'+b.nights+'n</span>'+
+      delBtn+
+    '</div>';
+  }).join('');
+}
+
+function toggleBookings(id) {
+  var el = document.getElementById('bookings-'+id);
+  el.classList.toggle('open');
+}
+
+// ── STATS ──
+function updateStats() {
+  var today = todayStr();
+  var occ=0, checkin=0, free=0;
+  properties.forEach(function(p) {
+    if (p.type === 'hotel') {
+      // Count each room separately
+      p.rooms.forEach(function(r) {
+        var isOcc = false, isCi = false;
+        r.bookings.forEach(function(b) {
+          if (b.from <= today && b.to > today) isOcc = true;
+          if (b.from === today) isCi = true;
+        });
+        if (isOcc) occ++; else free++;
+        if (isCi) checkin++;
+      });
+      return;
+    }
+    var isOcc = false, isCi = false;
+    p.bookings.forEach(function(b) {
+      if (b.from <= today && b.to > today) isOcc = true;
+      if (b.from === today) isCi = true;
+    });
+    if (isOcc) occ++; else free++;
+    if (isCi) checkin++;
+  });
+  // Total managed units
+  var totalUnits = 0;
+  properties.forEach(function(p){ totalUnits += p.type==='hotel' ? p.rooms.length : 1; });
+  document.getElementById('statCase').textContent = totalUnits;
+  document.getElementById('statOcc').textContent = occ;
+  document.getElementById('statCheckin').textContent = checkin;
+  document.getElementById('statFree').textContent = free;
+}
+
+// ── TIMELINE ──
+function renderTimeline() {
+  var wrap = document.getElementById('timelineRows');
+  wrap.innerHTML = '';
+  var today = new Date();
+
+  properties.forEach(function(p) {
+    if (p.type === 'hotel') {
+      // For hotel show overall occupancy across all rooms
+      var totalRoomDays = p.rooms.length * 30;
+      var occRoomDays = 0;
+      for (var d=0; d<30; d++) {
+        var dd2 = new Date(today); dd2.setDate(dd2.getDate()+d);
+        var ds2 = dd2.toISOString().split('T')[0];
+        p.rooms.forEach(function(r){
+          r.bookings.forEach(function(b){ if (b.from<=ds2 && b.to>ds2) occRoomDays++; });
+        });
+      }
+      var pct2 = Math.round(occRoomDays/totalRoomDays*100);
+      var row2 = document.createElement('div'); row2.className='tl-row';
+      row2.innerHTML='<div class="tl-name" title="'+p.name+'">'+p.emoji+' '+p.name+'</div>'+
+        '<div class="tl-bar-wrap"><div class="tl-segment tl-seg-occ" style="width:'+pct2+'%"></div></div>'+
+        '<div class="tl-pct">'+pct2+'%</div>';
+      wrap.appendChild(row2);
+      return;
+    }
+    var occ = 0;
+    for (var d=0; d<30; d++) {
+      var dd = new Date(today); dd.setDate(dd.getDate()+d);
+      var ds = dd.toISOString().split('T')[0];
+      p.bookings.forEach(function(b){ if (b.from<=ds && b.to>ds) occ++; });
+    }
+    var pct = Math.round(occ/30*100);
+    var row = document.createElement('div');
+    row.className = 'tl-row';
+    row.innerHTML = 
+      '<div class="tl-name" title="'+p.name+'">'+p.emoji+' '+p.name+'</div>'+
+      '<div class="tl-bar-wrap">'+
+        '<div class="tl-segment tl-seg-occ" style="width:'+pct+'%"></div>'+
+      '</div>'+
+      '<div class="tl-pct">'+pct+'%</div>';
+    wrap.appendChild(row);
+  });
+}
+
+// ── CALENDAR ──
+function renderCalendar() {
+  var months = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  document.getElementById('calTitle').textContent = months[currentMonth]+' '+currentYear;
+  var grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].forEach(function(d){
+    var el=document.createElement('div'); el.className='cal-day-name'; el.textContent=d; grid.appendChild(el);
+  });
+  var first = new Date(currentYear, currentMonth, 1).getDay();
+  var startOffset = (first === 0) ? 6 : first - 1;
+  var daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
+  var todayStr = todayStr();
+
+  for (var i=0; i<startOffset; i++) {
+    var e=document.createElement('div'); e.className='cal-day empty'; grid.appendChild(e);
+  }
+  for (var day=1; day<=daysInMonth; day++) {
+    var ds = currentYear+'-'+String(currentMonth+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    var airbnbOcc=false, bookingOcc=false;
+    var manualOcc=false;
+    properties.forEach(function(p){
+      var bklist = p.type==='hotel' ? p.rooms.reduce(function(a,r){return a.concat(r.bookings);},[]) : p.bookings;
+      bklist.forEach(function(b){
+        if (b.from<=ds && b.to>ds) {
+          if (b.source==='airbnb') airbnbOcc=true;
+          else if (b.source==='booking') bookingOcc=true;
+          else manualOcc=true;
+        }
+      });
+    });
+    var el=document.createElement('div');
+    el.textContent=day;
+    var cls='cal-day';
+    if (ds===todayStr) cls+=' today';
+    else if (airbnbOcc && bookingOcc) cls+=' multi';
+    else if (airbnbOcc) cls+=' occupied';
+    else if (bookingOcc) cls+=' occupied-b';
+    else if (manualOcc) cls+=' occupied-m';
+    else cls+=' free';
+    el.className=cls;
+    grid.appendChild(el);
+  }
+}
+
+function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth=0; currentYear++; }
+  if (currentMonth < 0)  { currentMonth=11; currentYear--; }
+  renderCalendar();
+}
+
+// ── MODAL ──
+function openModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function selectEmoji(el, emoji) {
+  selectedEmoji = emoji;
+  document.getElementById('newEmoji').value = emoji;
+  document.querySelectorAll('[onclick^="selectEmoji"]').forEach(function(e){ e.style.opacity='.4'; });
+  el.style.opacity='1';
+}
+
+function addProperty() {
+  var name = document.getElementById('newName').value.trim();
+  var addr = document.getElementById('newAddr').value.trim();
+  if (!name) { toast('Inserisci il nome della casa'); return; }
+  var id = Date.now();
+  properties.push({id:id, name:name, addr:addr||'Indirizzo non inserito', emoji:selectedEmoji, airbnbUrl:'', bookingUrl:'', bookings:[]});
+  save();
+  renderProperties();
+  closeModal();
+  document.getElementById('newName').value='';
+  document.getElementById('newAddr').value='';
+  toast('✓ Casa aggiunta: '+name);
+}
+
+function editProperty(id) {
+  var p = properties.find(function(x){ return x.id===id; });
+  if (!p) return;
+  document.getElementById('ep-name').value = p.name;
+  document.getElementById('ep-addr').value = p.addr;
+  document.getElementById('ep-emoji').value = p.emoji;
+  document.getElementById('ep-id').value = id;
+  document.getElementById('ep-title').textContent = 'Modifica — ' + p.name;
+  document.getElementById('editPropModal').classList.add('open');
+  document.getElementById('ep-name').focus();
+}
+
+function closeEditPropModal() {
+  document.getElementById('editPropModal').classList.remove('open');
+}
+
+function saveEditProperty() {
+  var id = parseInt(document.getElementById('ep-id').value);
+  var name = document.getElementById('ep-name').value.trim();
+  var addr = document.getElementById('ep-addr').value.trim();
+  var emoji = document.getElementById('ep-emoji').value.trim();
+  if (!name) { toast('Inserisci il nome'); return; }
+  var p = properties.find(function(x){ return x.id===id; });
+  if (!p) return;
+  p.name = name;
+  p.addr = addr || p.addr;
+  p.emoji = emoji || p.emoji;
+  save();
+  renderProperties();
+  closeEditPropModal();
+  toast('✓ Casa aggiornata: ' + name);
+}
+
+function deleteProperty(id) {
+  var p = properties.find(function(x){ return x.id===id; });
+  if (!p) return;
+  if (!confirm('Eliminare ' + p.name + '? Tutte le prenotazioni verranno perse.')) return;
+  properties = properties.filter(function(x){ return x.id!==id; });
+  save();
+  renderProperties();
+  closeEditPropModal();
+  toast('Casa eliminata');
+}
+
+// ── HOTEL RENDERING ──
+function renderHotelCard(p, today) {
+  if (!today) today = todayStr();
+  
+  var occCount = 0;
+  p.rooms.forEach(function(r){
+    r.bookings.forEach(function(b){ if (b.from<=today && b.to>today) occCount++; });
+  });
+
+  var card = document.createElement('div');
+  card.className = 'hotel-card';
+
+  // Header
+  var header = '<div class="hotel-header" onclick="toggleHotelRooms('+p.id+')">' +
+    '<div style="font-size:32px;margin-right:4px">'+p.emoji+'</div>' +
+    '<div><div class="hotel-name">'+p.name+'</div><div class="hotel-addr">'+p.addr+'</div></div>' +
+    '<div class="hotel-stats">' +
+      '<div class="hotel-occ">'+occCount+'/'+p.rooms.length+'</div>' +
+      '<div class="hotel-occ-label">camere occupate</div>' +
+    '</div>' +
+  '</div>';
+
+  // Rooms grid
+  var roomsHtml = '<div class="rooms-grid" id="rooms-'+p.id+'" style="display:grid">';
+  p.rooms.forEach(function(r) {
+    var rOcc = null, isCi = false, isCo = false;
+    r.bookings.forEach(function(b){
+      if (b.from <= today && b.to > today) rOcc = b;
+      if (b.from === today) isCi = true;
+      if (b.to === today) isCo = true;
+    });
+    var nextB = null;
+    r.bookings.forEach(function(b){ if (b.from>today && (!nextB||b.from<nextB.from)) nextB=b; });
+
+    var statusHtml, guestHtml='', datesHtml='';
+    if (rOcc) {
+      if (isCi) statusHtml='<span class="room-status rs-checkin">🔑 Check-in</span>';
+      else if (isCo) statusHtml='<span class="room-status rs-checkout">→ Check-out</span>';
+      else statusHtml='<span class="room-status rs-occ">● Occupata</span>';
+      guestHtml='<div class="room-guest">'+rOcc.guest+'</div>';
+      datesHtml='<div class="room-dates">fino al '+formatDate(rOcc.to)+'</div>';
+    } else {
+      statusHtml='<span class="room-status rs-free">✓ Libera</span>';
+      if (nextB) datesHtml='<div class="room-dates">Prossimo: '+formatDate(nextB.from)+'</div>';
+    }
+
+    var srcBadge = rOcc ? (rOcc.source==='airbnb'?'<span style="font-size:9px;color:#FF5A5F;font-weight:700;margin-left:4px">A</span>':rOcc.source==='booking'?'<span style="font-size:9px;color:#003B95;font-weight:700;margin-left:4px">B</span>':'<span style="font-size:9px;color:var(--green);font-weight:700;margin-left:4px">D</span>') : '';
+
+    roomsHtml += '<div class="room-cell" onclick="openRoomModal('+p.id+','+r.num+')">' +
+      '<div class="room-num">Cam. '+r.num+srcBadge+'</div>' +
+      '<div class="room-type">'+r.type+'</div>' +
+      statusHtml + guestHtml + datesHtml +
+      '<button class="room-add-btn" onclick="event.stopPropagation();openRoomModal('+p.id+','+r.num+')">+</button>' +
+    '</div>';
+  });
+  roomsHtml += '</div>';
+
+  // Actions bar
+  var actions = '<div class="hotel-actions">' +
+    '<button class="btn-small btn-primary" onclick="openRoomModal('+p.id+',0)">+ Nuova prenotazione</button>' +
+    '<button class="btn-small" onclick="showAllRoomBookings('+p.id+')">📋 Tutte le prenotazioni</button>' +
+  '</div>';
+
+  card.innerHTML = header + roomsHtml + actions +
+    '<div id="hotel-bookings-'+p.id+'" style="display:none;padding:16px 20px;border-top:1px solid var(--border)"></div>';
+  return card;
+}
+
+function toggleHotelRooms(id) {
+  // Rooms are always visible — just toggle the bookings detail
+}
+
+function showAllRoomBookings(pid) {
+  var p = properties.find(function(x){ return x.id===pid; });
+  var wrap = document.getElementById('hotel-bookings-'+pid);
+  if (wrap.style.display !== 'none') { wrap.style.display='none'; return; }
+  var today = todayStr();
+  var all = [];
+  p.rooms.forEach(function(r){
+    r.bookings.forEach(function(b,i){ all.push({room:r, b:b, idx:i}); });
+  });
+  all.sort(function(a,b){ return a.b.from > b.b.from ? 1:-1; });
+  if (!all.length) { wrap.innerHTML='<p style="font-size:13px;color:var(--text3)">Nessuna prenotazione</p>'; }
+  else {
+    wrap.innerHTML = all.map(function(x){
+      var b=x.b, isPast=b.to<today;
+      var srcClass=b.source==='airbnb'?'src-airbnb':b.source==='booking'?'src-booking':'src-manual';
+      var srcLabel=b.source==='airbnb'?'A':b.source==='booking'?'B':'D';
+      var canDel = b.source==='direct'||b.source==='manual';
+      var delBtn = canDel
+        ? '<button class="booking-del" onclick="deleteRoomBooking('+pid+','+x.room.num+','+x.idx+')">✕</button>'
+        : '';
+      return '<div class="booking-row" style="'+(isPast?'opacity:.45':'')+'">' +
+        '<div class="booking-source '+srcClass+'">'+srcLabel+'</div>' +
+        '<div style="font-size:11px;font-weight:600;color:var(--text3);width:70px;flex-shrink:0">'+x.room.name+'</div>' +
+        '<div class="booking-guest">'+b.guest+'</div>' +
+        '<div class="booking-dates">'+formatDate(b.from)+' → '+formatDate(b.to)+'</div>' +
+        '<span class="booking-nights">'+b.nights+'n</span>' + delBtn +
+      '</div>';
+    }).join('');
+  }
+  wrap.style.display='block';
+}
+
+function deleteRoomBooking(pid, rnum, idx) {
+  var p = properties.find(function(x){ return x.id===pid; });
+  var r = p.rooms.find(function(x){ return x.num===rnum; });
+  var b = r ? r.bookings[idx] : null;
+  if (!b) return;
+  if (!confirm('Eliminare prenotazione di '+b.guest+'?')) return;
+  r.bookings.splice(idx,1);
+  save(); renderProperties(); toast('Prenotazione eliminata');
+}
+
+// ── ROOM BOOKING MODAL ──
+var currentRoomPid = null;
+var currentRoomNum = null;
+
+function openRoomModal(pid, rnum) {
+  currentRoomPid = pid;
+  currentRoomNum = rnum;
+  var p = properties.find(function(x){ return x.id===pid; });
+  var modal = document.getElementById('roomModal');
+  
+  // Populate room selector
+  var sel = document.getElementById('rm-room');
+  sel.innerHTML = '';
+  p.rooms.forEach(function(r){
+    sel.innerHTML += '<option value="'+r.num+'"'+(r.num===rnum?' selected':'')+'>'+r.name+' ('+r.type+')</option>';
+  });
+
+  // Default dates
+  var today = todayStr();
+  var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('rm-from').value = today;
+  document.getElementById('rm-to').value = tomorrow.toISOString().split('T')[0];
+  document.getElementById('rm-guest').value = '';
+  document.getElementById('rm-contact').value = '';
+  document.getElementById('rm-notes').value = '';
+  document.getElementById('rm-source').value = 'direct';
+  document.getElementById('rm-title').textContent = rnum===0 ? 'Nuova prenotazione — '+p.name : 'Prenota '+p.rooms.find(function(r){return r.num===rnum;}).name;
+  
+  modal.classList.add('open');
+  setTimeout(function(){ document.getElementById('rm-guest').focus(); }, 100);
+}
+
+function closeRoomModal() {
+  document.getElementById('roomModal').classList.remove('open');
+}
+
+function saveRoomBooking() {
+  var pid = currentRoomPid;
+  var rnum = parseInt(document.getElementById('rm-room').value);
+  var guest   = document.getElementById('rm-guest').value.trim();
+  var contact = document.getElementById('rm-contact').value.trim();
+  var from    = document.getElementById('rm-from').value;
+  var to      = document.getElementById('rm-to').value;
+  var notes   = document.getElementById('rm-notes').value.trim();
+  var source  = document.getElementById('rm-source').value;
+
+  if (!guest) { toast('Inserisci il nome ospite'); return; }
+  if (!from || !to || from >= to) { toast('Date non valide'); return; }
+
+  var p = properties.find(function(x){ return x.id===pid; });
+  var r = p.rooms.find(function(x){ return x.num===rnum; });
+
+  // Check overlap
+  var overlap = r.bookings.some(function(b){ return !(to<=b.from||from>=b.to); });
+  if (overlap) { toast('⚠️ Date sovrapposte con altra prenotazione in questa camera!'); return; }
+
+  var nights = Math.round((new Date(to)-new Date(from))/(1000*60*60*24));
+  var noteStr = contact+(notes?' · '+notes:'');
+
+  r.bookings.push({guest:guest, from:from, to:to, source:source, nights:nights, notes:noteStr||undefined});
+  save();
+  closeRoomModal();
+  renderProperties();
+  toast('✓ Prenotazione salvata — '+r.name+' per '+guest);
+}
+
+function toggleMBooking(id) {
+  var el = document.getElementById('mbooking-'+id);
+  var isOpen = el.classList.toggle('open');
+  if (isOpen) {
+    // Set default dates: today and tomorrow
+    var today = todayStr();
+    var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    var tmr = tomorrow.toISOString().split('T')[0];
+    var fromEl = document.getElementById('mb-from-'+id);
+    var toEl = document.getElementById('mb-to-'+id);
+    if (fromEl && !fromEl.value) fromEl.value = today;
+    if (toEl && !toEl.value) toEl.value = tmr;
+    document.getElementById('mb-guest-'+id).focus();
+    // Also open bookings panel
+    document.getElementById('bookings-'+id).classList.add('open');
+  }
+}
+
+function saveManualBooking(id) {
+  var guest   = document.getElementById('mb-guest-'+id).value.trim();
+  var contact = document.getElementById('mb-contact-'+id).value.trim();
+  var from    = document.getElementById('mb-from-'+id).value;
+  var to      = document.getElementById('mb-to-'+id).value;
+  var notes   = document.getElementById('mb-notes-'+id).value.trim();
+
+  if (!guest) { toast('Inserisci il nome dell\'ospite'); return; }
+  if (!from || !to) { toast('Inserisci le date'); return; }
+  if (from >= to) { toast('La partenza deve essere dopo l\'arrivo'); return; }
+
+  // Check overlap with existing bookings
+  var p = properties.find(function(x){ return x.id===id; });
+  var overlap = p.bookings.some(function(b) {
+    return !(to <= b.from || from >= b.to);
+  });
+  if (overlap) { 
+    toast('⚠️ Attenzione: le date si sovrappongono con un\'altra prenotazione!'); 
+    return; 
+  }
+
+  var nights = Math.round((new Date(to)-new Date(from))/(1000*60*60*24));
+  var noteStr = notes;
+  if (contact) noteStr = contact + (notes ? ' · '+notes : '');
+
+  p.bookings.push({
+    guest: guest,
+    from: from,
+    to: to,
+    source: 'manual',
+    nights: nights,
+    notes: noteStr
+  });
+
+  save();
+
+  // Reset form
+  document.getElementById('mb-guest-'+id).value='';
+  document.getElementById('mb-contact-'+id).value='';
+  document.getElementById('mb-from-'+id).value='';
+  document.getElementById('mb-to-'+id).value='';
+  document.getElementById('mb-notes-'+id).value='';
+  document.getElementById('mbooking-'+id).classList.remove('open');
+
+  renderProperties();
+  // Re-open the bookings panel to show new entry
+  setTimeout(function(){ document.getElementById('bookings-'+id).classList.add('open'); }, 50);
+  toast('✓ Prenotazione diretta salvata per '+guest+'!');
+}
+
+function deleteBooking(propId, idx) {
+  var p = properties.find(function(x){ return x.id===propId; });
+  var b = p.bookings[idx];
+  if (!b) return;
+  if (!confirm('Eliminare la prenotazione di '+b.guest+'?')) return;
+  p.bookings.splice(idx, 1);
+  save();
+  renderProperties();
+  setTimeout(function(){ document.getElementById('bookings-'+propId).classList.add('open'); }, 50);
+  toast('Prenotazione eliminata');
+}
+
+function openGuide(id) {
+  toast('Apri la guida della casa dal link Netlify corrispondente');
+}
+
+// ── ICAL ──
+function selectSource(src) {
+  selectedSource = src;
+  document.getElementById('btnAirbnb').className = 'ical-source-btn' + (src==='airbnb' ? ' active-airbnb' : '');
+  document.getElementById('btnBooking').className = 'ical-source-btn' + (src==='booking' ? ' active-booking' : '');
+}
+
+function updateIcalSelect() {
+  var sel = document.getElementById('icalProp');
+  sel.innerHTML = '<option value="">Seleziona casa...</option>';
+  properties.forEach(function(p){
+    sel.innerHTML += '<option value="'+p.id+'">'+p.emoji+' '+p.name+'</option>';
+  });
+}
+
+function saveIcal() {
+  var propId = parseInt(document.getElementById('icalProp').value);
+  var url = document.getElementById('icalUrl').value.trim();
+  if (!propId) { toast('Seleziona una casa'); return; }
+  if (!url) { toast('Inserisci il link iCal'); return; }
+  var p = properties.find(function(x){ return x.id===propId; });
+  if (!p) return;
+  if (selectedSource==='airbnb') p.airbnbUrl=url;
+  else p.bookingUrl=url;
+  save();
+  document.getElementById('icalUrl').value='';
+  document.getElementById('lastSync').textContent='Ultimo sync: '+new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  renderProperties();
+  toast('✓ Calendario collegato! Sync automatico ogni ora.');
+}
+
+// ── EARNINGS & COSTS ──
+
+function getCosts(propId) {
+  var all = JSON.parse(localStorage.getItem('prop_costs') || '{}');
+  return all[propId] || [];
+}
+
+function saveCosts(propId, costs) {
+  var all = JSON.parse(localStorage.getItem('prop_costs') || '{}');
+  all[propId] = costs;
+  localStorage.setItem('prop_costs', JSON.stringify(all));
+}
+
+function getRate(propId) {
+  var rates = JSON.parse(localStorage.getItem('earn_rates') || '{}');
+  return rates[propId] || 0;
+}
+
+function saveRate(propId, val) {
+  var rates = JSON.parse(localStorage.getItem('earn_rates') || '{}');
+  rates[propId] = parseFloat(val) || 0;
+  localStorage.setItem('earn_rates', JSON.stringify(rates));
+  renderEarnings();
+}
+
+function getCommission(propId) {
+  var comms = JSON.parse(localStorage.getItem('earn_comm') || '{}');
+  return comms[propId] || 15;
+}
+
+function saveCommission(propId, val) {
+  var comms = JSON.parse(localStorage.getItem('earn_comm') || '{}');
+  comms[propId] = parseFloat(val) || 0;
+  localStorage.setItem('earn_comm', JSON.stringify(comms));
+  renderEarnings();
+}
+
+function getNights(p, monthStart, monthEnd) {
+  var bookings = [];
+  if (p.type === 'hotel') {
+    p.rooms.forEach(function(r){ bookings = bookings.concat(r.bookings); });
+  } else {
+    bookings = p.bookings;
+  }
+  var nights = 0;
+  bookings.forEach(function(b){
+    if (b.from <= monthEnd && b.to > monthStart) {
+      var from = new Date(Math.max(new Date(b.from), new Date(monthStart)));
+      var to   = new Date(Math.min(new Date(b.to), new Date(monthEnd)));
+      nights += Math.round((to-from)/(1000*60*60*24));
+    }
+  });
+  return nights;
+}
+
+function renderEarnings() {
+  // Update property selector
+  var propSel = document.getElementById('earningsProp');
+  if (propSel && !propSel.dataset.init) {
+    propSel.innerHTML = '<option value="all">Tutte le strutture</option>';
+    properties.forEach(function(p){
+      propSel.innerHTML += '<option value="'+p.id+'">'+p.emoji+' '+p.name+'</option>';
+    });
+    propSel.dataset.init = '1';
+  }
+
+  var monthSel = document.getElementById('earningsMonth');
+  var month = monthSel ? parseInt(monthSel.value) : new Date().getMonth();
+  if (monthSel && !monthSel.dataset.init) {
+    monthSel.value = new Date().getMonth();
+    monthSel.dataset.init = '1';
+    month = new Date().getMonth();
+  }
+  var year = new Date().getFullYear();
+  var monthStart = new Date(year, month, 1).toISOString().split('T')[0];
+  var monthEnd   = new Date(year, month+1, 0).toISOString().split('T')[0];
+
+  var selectedProp = propSel ? propSel.value : 'all';
+  var propsToShow = selectedProp === 'all'
+    ? properties
+    : properties.filter(function(p){ return p.id === parseInt(selectedProp); });
+
+  var list = document.getElementById('earningsList');
+  if (!list) return;
+
+  var html = '';
+  var grandRevenue = 0, grandCosts = 0;
+
+  propsToShow.forEach(function(p) {
+    var nights = getNights(p, monthStart, monthEnd);
+    var rate = getRate(p.id);
+    var commPct = getCommission(p.id);
+    var grossRevenue = nights * rate;
+    var commission = Math.round(grossRevenue * commPct / 100);
+    var netRevenue = grossRevenue - commission;
+
+    var costs = getCosts(p.id);
+    // Filter variable costs by month (they have a date), fixed always apply
+    var totalFixedCosts = 0, totalVarCosts = 0, totalExtraCosts = 0;
+    costs.forEach(function(c){
+      var amt = parseFloat(c.amount) || 0;
+      if (c.type === 'fixed') totalFixedCosts += amt;
+      else if (c.type === 'variable') totalVarCosts += amt * (nights || 0);
+      else if (c.type === 'extra') totalExtraCosts += amt;
+    });
+    var totalCosts = totalFixedCosts + totalVarCosts + totalExtraCosts + commission;
+    var netProfit = netRevenue - totalFixedCosts - totalVarCosts - totalExtraCosts;
+
+    grandRevenue += grossRevenue;
+    grandCosts += totalCosts;
+
+    var pnlClass = netProfit > 0 ? 'pnl-positive' : netProfit < 0 ? 'pnl-negative' : 'pnl-neutral';
+    var pnlColor = netProfit > 0 ? 'pnl-green' : 'pnl-red';
+
+    // Build cost rows HTML
+    var costRowsHtml = '';
+    costs.forEach(function(c, i) {
+      var typeLabelMap = {fixed:'Fisso',variable:'x notte',extra:'Straord.',commission:'Comm.'};
+      var typeBadge = {fixed:'ct-fixed',variable:'ct-variable',extra:'ct-extra',commission:'ct-commission'};
+      costRowsHtml +=
+        '<div class="cost-row" id="cost-row-'+p.id+'-'+i+'">' +
+          '<select class="cost-type-sel '+typeBadge[c.type]+'" onchange="updateCostType('+p.id+','+i+',this.value)">' +
+            '<option value="fixed"'+(c.type==='fixed'?' selected':'')+'>Fisso/mese</option>' +
+            '<option value="variable"'+(c.type==='variable'?' selected':'')+'>x notte</option>' +
+            '<option value="extra"'+(c.type==='extra'?' selected':'')+'>Straord.</option>' +
+          '</select>' +
+          '<input class="cost-label-input" type="text" placeholder="es. Pulizie" value="'+(c.label||'')+'" onblur="updateCostLabel('+p.id+','+i+',this.value)">' +
+          '<input class="cost-amount-input" type="number" placeholder="0" value="'+(c.amount||'')+'" min="0" step="10" onblur="updateCostAmount('+p.id+','+i+',this.value)"> €' +
+          '<button class="cost-del-btn" onclick="deleteCost('+p.id+','+i+')">✕</button>' +
+        '</div>';
+    });
+
+    html +=
+      '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--border)">' +
+        '<div style="font-weight:600;color:var(--navy);margin-bottom:8px;font-size:14px">'+p.emoji+' '+p.name+'</div>' +
+
+        // Revenue row
+        '<div class="earnings-row">' +
+          '<div class="earn-label">Entrate lorde<br><span style="font-size:11px;color:var(--text3)">'+nights+' notti</span></div>' +
+          '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span style="font-size:11px;color:var(--text3)">€/notte</span>' +
+            '<input class="earn-input" type="number" placeholder="0" value="'+(rate||'')+'" onchange="saveRate('+p.id+',this.value)" min="0" step="10">' +
+            '<div class="earn-val">€'+(grossRevenue>0?grossRevenue.toLocaleString('it-IT'):'—')+'</div>' +
+          '</div>' +
+        '</div>' +
+
+        // Commission row
+        '<div class="earnings-row">' +
+          '<div class="earn-label" style="color:var(--red)">Commissioni piattaforme</div>' +
+          '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span style="font-size:11px;color:var(--text3)">%</span>' +
+            '<input class="earn-input" type="number" placeholder="15" value="'+commPct+'" onchange="saveCommission('+p.id+',this.value)" min="0" max="100" step="1" style="width:60px">' +
+            '<div class="earn-val" style="color:var(--red)">-€'+(commission>0?commission.toLocaleString('it-IT'):'0')+'</div>' +
+          '</div>' +
+        '</div>' +
+
+        // Costs section
+        '<div class="costs-section">' +
+          '<div class="costs-title">Costi <button class="btn-small" onclick="addCost('+p.id+')" style="padding:3px 10px;font-size:11px">+ Aggiungi</button></div>' +
+          '<div id="costs-'+p.id+'">' + costRowsHtml + '</div>' +
+          (!costs.length ? '<div style="font-size:12px;color:var(--text3);padding:4px 0">Nessun costo aggiunto. Clicca "+ Aggiungi" per iniziare.</div>' : '') +
+        '</div>' +
+
+        // P&L box
+        '<div class="pnl-box '+pnlClass+'">' +
+          '<div class="pnl-row"><span class="pnl-label">Entrate nette (dopo comm.)</span><span>€'+(netRevenue>0?netRevenue.toLocaleString('it-IT'):'0')+'</span></div>' +
+          '<div class="pnl-row"><span class="pnl-label">Costi fissi</span><span style="color:var(--red)">-€'+totalFixedCosts.toLocaleString('it-IT')+'</span></div>' +
+          (totalVarCosts > 0 ? '<div class="pnl-row"><span class="pnl-label">Costi variabili ('+nights+'n)</span><span style="color:var(--red)">-€'+totalVarCosts.toLocaleString('it-IT')+'</span></div>' : '') +
+          (totalExtraCosts > 0 ? '<div class="pnl-row"><span class="pnl-label">Straordinari</span><span style="color:var(--red)">-€'+totalExtraCosts.toLocaleString('it-IT')+'</span></div>' : '') +
+          '<div class="pnl-row"><span>UTILE NETTO</span><span class="'+pnlColor+'" style="font-family:Cormorant Garamond,serif;font-size:20px">€'+netProfit.toLocaleString('it-IT')+'</span></div>' +
+        '</div>' +
+      '</div>';
+  });
+
+  // Grand total if showing all
+  if (selectedProp === 'all' && propsToShow.length > 1) {
+    var grandNet = grandRevenue - grandCosts;
+    var grandClass = grandNet >= 0 ? 'pnl-positive' : 'pnl-negative';
+    var grandColor = grandNet >= 0 ? 'pnl-green' : 'pnl-red';
+    html += '<div class="earn-total" style="margin-top:4px">' +
+      '<div><div class="earn-total-label">TOTALE ENTRATE</div><div style="font-size:13px;opacity:.8">€'+grandRevenue.toLocaleString('it-IT')+'</div></div>' +
+      '<div style="text-align:right"><div class="earn-total-label">UTILE NETTO TOTALE</div><div class="earn-total-val '+grandColor+'">€'+grandNet.toLocaleString('it-IT')+'</div></div>' +
+    '</div>';
+  }
+
+  list.innerHTML = html || '<div style="font-size:13px;color:var(--text3)">Nessuna struttura selezionata</div>';
+}
+
+// ── COST MANAGEMENT ──
+function addCost(propId) {
+  var costs = getCosts(propId);
+  costs.push({type:'fixed', label:'', amount:''});
+  saveCosts(propId, costs);
+  renderEarnings();
+  // Focus the new label input
+  setTimeout(function(){
+    var rows = document.querySelectorAll('#costs-'+propId+' .cost-label-input');
+    if (rows.length) rows[rows.length-1].focus();
+  }, 50);
+}
+
+function updateCostType(propId, idx, val) {
+  var costs = getCosts(propId);
+  if (costs[idx]) costs[idx].type = val;
+  saveCosts(propId, costs);
+  renderEarnings();
+}
+
+function updateCostLabel(propId, idx, val) {
+  var costs = getCosts(propId);
+  if (costs[idx]) costs[idx].label = val;
+  saveCosts(propId, costs);
+}
+
+function updateCostAmount(propId, idx, val) {
+  var costs = getCosts(propId);
+  if (costs[idx]) costs[idx].amount = parseFloat(val) || 0;
+  saveCosts(propId, costs);
+  renderEarnings();
+}
+
+function deleteCost(propId, idx) {
+  var costs = getCosts(propId);
+  costs.splice(idx, 1);
+  saveCosts(propId, costs);
+  renderEarnings();
+}
+
+// ── NOTIFICATIONS ──
+function renderNotifications() {
+  var banner = document.getElementById('notifBanner');
+  var list   = document.getElementById('notifList');
+  if (!banner || !list) return;
+
+  var today = new Date();
+  var notifs = [];
+
+  properties.forEach(function(p) {
+    var bookings = [];
+    if (p.type === 'hotel') {
+      p.rooms.forEach(function(r){
+        r.bookings.forEach(function(b){ bookings.push({b:b, label:p.name+' — '+r.name}); });
+      });
+    } else {
+      p.bookings.forEach(function(b){ bookings.push({b:b, label:p.name}); });
+    }
+
+    bookings.forEach(function(item) {
+      var b = item.b;
+      var fromDate = new Date(b.from);
+      var diff = Math.round((fromDate - today)/(1000*60*60*24));
+      if (diff >= 0 && diff <= 7) {
+        notifs.push({label:item.label, guest:b.guest, from:b.from, diff:diff});
+      }
+      // Check-out today
+      var toDate = new Date(b.to);
+      var diffOut = Math.round((toDate - today)/(1000*60*60*24));
+      if (diffOut === 0) {
+        notifs.push({label:item.label, guest:b.guest, from:b.to, diff:-1, checkout:true});
+      }
+    });
+  });
+
+  notifs.sort(function(a,b){ return a.diff - b.diff; });
+
+  if (!notifs.length) {
+    banner.classList.remove('has-notifs');
+    return;
+  }
+
+  banner.classList.add('has-notifs');
+  list.innerHTML = notifs.map(function(n) {
+    var emoji, text, daysLabel;
+    if (n.checkout) {
+      emoji = '🧳'; text = n.guest + ' — ' + n.label + ' (check-out)'; daysLabel = 'oggi';
+    } else if (n.diff === 0) {
+      emoji = '🔑'; text = n.guest + ' — ' + n.label; daysLabel = 'oggi';
+    } else if (n.diff === 1) {
+      emoji = '📅'; text = n.guest + ' — ' + n.label; daysLabel = 'domani';
+    } else {
+      emoji = '📅'; text = n.guest + ' — ' + n.label; daysLabel = 'tra '+n.diff+' gg';
+    }
+    return '<div class="notif-item">' +
+      '<span class="notif-emoji">'+emoji+'</span>' +
+      '<span class="notif-text">'+text+'</span>' +
+      '<span class="notif-days">'+daysLabel+'</span>' +
+    '</div>';
+  }).join('');
+}
+
+// ── UTILS ──
+function formatDate(s) {
+  var d=new Date(s); 
+  return d.getDate()+'/'+(d.getMonth()+1);
+}
+
+function toast(msg) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+
+// ── CHECKIN FORMS ──
+function renderCheckinPanel() {
+  var forms = JSON.parse(localStorage.getItem('checkin_forms') || '[]');
+  var read  = JSON.parse(localStorage.getItem('checkin_read')  || '[]');
+  var newCount = forms.filter(function(f){ return read.indexOf(f.id) === -1; }).length;
+
+  var btn = document.getElementById('checkinCount');
+  if (btn) {
+    btn.textContent = newCount > 0 ? newCount + ' nuovi' : forms.length + ' totali';
+    btn.style.background = newCount > 0 ? 'var(--green)' : '';
+    btn.style.color = newCount > 0 ? '#fff' : '';
+    btn.style.borderColor = newCount > 0 ? 'var(--green)' : '';
+  }
+
+  var list = document.getElementById('checkinList');
+  if (!list) return;
+  if (!forms.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text3)">Nessun modulo ricevuto ancora.</div>';
+  } else {
+    list.innerHTML = forms.slice(0,5).map(function(f) {
+      var isNew = read.indexOf(f.id) === -1;
+      var dt = new Date(f.timestamp).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return '<div class="checkin-entry">' +
+        '<div class="ci-header">' +
+          '<div class="ci-name">'+f.nome+' '+f.cognome+' <span class="ci-badge '+(isNew?'ci-new':'ci-read')+'">'+(isNew?'NUOVO':'letto')+'</span></div>' +
+          '<div class="ci-time">'+dt+'</div>' +
+        '</div>' +
+        '<div class="ci-details">' +
+          '<span>🏠 '+(f.casa||'N/D')+'</span>' +
+          '<span>👥 '+f.adulti+' adulti'+(f.bambini>0?' + '+f.bambini+' bambini':'')+'</span>' +
+          '<span>🕐 Arrivo: '+(f.arrivoOra||'N/D')+'</span>' +
+        '</div>' +
+        '<div class="ci-actions">' +
+          '<button class="ci-btn" onclick="openCheckinDetail('+f.id+')">👁 Dettaglio</button>' +
+          '<button class="ci-btn ci-btn-del" onclick="deleteCheckin('+f.id+')">✕ Elimina</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Render links for each property
+  var linksWrap = document.getElementById('checkinLinks');
+  if (linksWrap) {
+    linksWrap.innerHTML = properties.map(function(p) {
+      var baseUrl = window.location.href.replace('dashboard.html','').replace(/\?.*$/,'');
+      var url = baseUrl + 'checkin_form.html?casa=' + encodeURIComponent(p.name);
+      return '<div style="margin-bottom:10px">' +
+        '<div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">'+p.emoji+' '+p.name+'</div>' +
+        '<div style="display:flex;gap:6px">' +
+          '<input style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--text2);background:var(--off)" value="'+url+'" readonly id="link-'+p.id+'">' +
+          '<button class="btn-small" onclick="copyLink('+p.id+')">Copia</button>' +
+          '<button class="btn-small" onclick="showQR(this)" data-url="'+url+'" data-name="'+p.name+'">QR</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+function copyLink(propId) {
+  var inp = document.getElementById('link-'+propId);
+  if (inp) { navigator.clipboard.writeText(inp.value).then(function(){ toast('✓ Link copiato!'); }); }
+}
+
+function showQR(btn) {
+  var url = btn.dataset.url;
+  var name = btn.dataset.name;
+  var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url);
+  // Open QR in new tab
+  var w = window.open('', '_blank');
+  w.document.write('<html><body style="text-align:center;font-family:sans-serif;padding:40px;background:#F2F6FC">' +
+    '<h2 style="color:#0D2B4E;margin-bottom:8px">QR Pre Check-in</h2>' +
+    '<p style="color:#4A6080;margin-bottom:20px">'+name+'</p>' +
+    '<img src="'+qrUrl+'" style="border:1px solid #D0DCF0;border-radius:12px;padding:12px;background:#fff"><br><br>' +
+    '<p style="font-size:12px;color:#8AA0BC">Stampa e incolla in casa o invia via WhatsApp</p>' +
+    '<a href="'+url+'" style="font-size:11px;color:#2B6CB0">'+url+'</a>' +
+  '</body></html>');
+}
+
+function openCheckinDetail(id) {
+  var forms = JSON.parse(localStorage.getItem('checkin_forms') || '[]');
+  var f = forms.find(function(x){ return x.id === id; });
+  if (!f) return;
+
+  // Mark as read
+  var read = JSON.parse(localStorage.getItem('checkin_read') || '[]');
+  if (read.indexOf(id) === -1) { read.push(id); localStorage.setItem('checkin_read', JSON.stringify(read)); }
+
+  document.getElementById('ciModalTitle').textContent = f.nome + ' ' + f.cognome + ' — Pre Check-in';
+  
+  var rows = [
+    ['Casa', f.casa || 'N/D'],
+    ['Nome completo', f.nome + ' ' + f.cognome],
+    ['Data di nascita', f.nascita],
+    ['Luogo di nascita', f.luogoNascita || '—'],
+    ['Nazionalità', f.nazionalita],
+    ['Telefono', f.telefono || '—'],
+    ['Email', f.email || '—'],
+    ['Documento', f.docTipo + ' — ' + f.docNum],
+    ['Scadenza doc.', f.docScad || '—'],
+    ['Rilasciato da', f.docRilascio || '—'],
+    ['Data rilascio', f.docDataRilascio || '—'],
+    ['Adulti', f.adulti],
+    ['Bambini', f.bambini + (f.bambiniEta ? ' ('+f.bambiniEta+')' : '')],
+    ['Animali', f.animali],
+    ['Note gruppo', f.noteGruppo || '—'],
+    ['Orario arrivo', f.arrivoOra],
+    ['Mezzo di trasporto', f.mezzo || '—'],
+    ['Reg. accettato', f.accettazioneRegolamento ? '✓ Sì' : 'No'],
+    ['Privacy accettata', f.accettazionePrivacy ? '✓ Sì' : 'No'],
+    ['Modulo inviato', new Date(f.timestamp).toLocaleString('it-IT')],
+  ];
+
+  var html = '<table style="width:100%;border-collapse:collapse">' +
+    rows.map(function(r){
+      return '<tr><td style="padding:6px 8px;color:#4A6080;font-size:12px;width:40%;border-bottom:1px solid #F2F6FC">'+r[0]+'</td>' +
+             '<td style="padding:6px 8px;font-weight:500;font-size:13px;border-bottom:1px solid #F2F6FC">'+r[1]+'</td></tr>';
+    }).join('') + '</table>';
+
+  if (f.firma) {
+    html += '<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#8AA0BC;margin-bottom:6px">Firma digitale</div>' +
+      '<img src="'+f.firma+'" style="max-width:100%;border:1px solid #D0DCF0;border-radius:8px;background:#fff"></div>';
+  }
+
+  document.getElementById('ciModalBody').innerHTML = html;
+  document.getElementById('ciModal').classList.add('open');
+  renderCheckinPanel();
+}
+
+function deleteCheckin(id) {
+  if (!confirm('Eliminare questo modulo di check-in?')) return;
+  var forms = JSON.parse(localStorage.getItem('checkin_forms') || '[]');
+  forms = forms.filter(function(f){ return f.id !== id; });
+  localStorage.setItem('checkin_forms', JSON.stringify(forms));
+  renderCheckinPanel();
+  toast('Modulo eliminato');
+}
+
+function toggleCheckinPanel() {
+  var read = JSON.parse(localStorage.getItem('checkin_read') || '[]');
+  var forms = JSON.parse(localStorage.getItem('checkin_forms') || '[]');
+  forms.forEach(function(f){ if (read.indexOf(f.id)===-1) read.push(f.id); });
+  localStorage.setItem('checkin_read', JSON.stringify(read));
+  renderCheckinPanel();
+}
+
+// ── INIT ──
+// Clear all demo airbnb/booking bookings from properties on startup
+// Real data comes from Firebase
+properties.forEach(function(p) {
+  if (p.type === 'hotel') {
+    p.rooms.forEach(function(r) {
+      r.bookings = r.bookings.filter(function(b){ 
+        return b.source !== 'airbnb' && b.source !== 'booking'; 
+      });
+    });
+  } else {
+    p.bookings = p.bookings.filter(function(b){ 
+      return b.source !== 'airbnb' && b.source !== 'booking'; 
+    });
+  }
+});
+
+selectSource('airbnb');
+renderProperties();
+renderCheckinPanel();
+
+// ── FIREBASE INTEGRATION ──
+var firebaseDb = null;
+
+function loadFirebaseBookings() {
+  if (!firebaseDb) return;
+  firebaseDb.ref('/bookings').on('value', function(snapshot) {
+    var raw = snapshot.val();
+    if (!raw) { console.log('Firebase: no data'); return; }
+
+    var data = Array.isArray(raw) ? raw : Object.values(raw);
+    console.log('Firebase: received ' + data.length + ' bookings');
+
+    // Reset airbnb/booking bookings from all properties
+    properties.forEach(function(p) {
+      if (p.type === 'hotel') {
+        p.rooms.forEach(function(r) {
+          r.bookings = (r.bookings || []).filter(function(b){ 
+            return b.source !== 'airbnb' && b.source !== 'booking'; 
+          });
+        });
+      } else {
+        p.bookings = (p.bookings || []).filter(function(b){ 
+          return b.source !== 'airbnb' && b.source !== 'booking'; 
+        });
+      }
+    });
+
+    var matched = 0;
+    data.forEach(function(b) {
+      if (!b || !b.propertyName || !b.from || !b.to) return;
+      var fbName = b.propertyName.toLowerCase().trim();
+      var prop = null;
+      for (var i = 0; i < properties.length; i++) {
+        var pName = properties[i].name.toLowerCase().trim();
+        if (pName === fbName || pName.indexOf(fbName) >= 0 || fbName.indexOf(pName) >= 0) {
+          prop = properties[i];
+          break;
+        }
+      }
+      if (prop && prop.type !== 'hotel') {
+        var isDup = false;
+        for (var j = 0; j < prop.bookings.length; j++) {
+          if (prop.bookings[j].from === b.from && prop.bookings[j].to === b.to) {
+            isDup = true; break;
+          }
+        }
+        if (!isDup) {
+          prop.bookings.push({
+            guest: (b.guest && b.guest !== 'Reserved') ? b.guest : 'Prenotazione',
+            from: b.from,
+            to: b.to,
+            nights: b.nights || 1,
+            source: b.source || 'airbnb'
+          });
+          matched++;
+        }
+      }
+    });
+
+    var syncEl = document.getElementById('lastFirebaseSync');
+    if (syncEl) syncEl.textContent = '● Sync ' + new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}) + ' (' + matched + ')';
+
+    renderProperties();
+    renderNotifications();
+    console.log('Firebase: ' + matched + ' prenotazioni associate');
+  });
+}
+
+
+</script>
+  <!-- Firebase SDK loaded at end so it's available when init runs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+    try {
+      firebase.initializeApp({
+        databaseURL: "https://casa-manager-24414-default-rtdb.europe-west1.firebasedatabase.app"
+      });
+      firebaseDb = firebase.database();
+      console.log('Firebase initialized OK');
+      loadFirebaseBookings();
+    } catch(e) {
+      console.error('Firebase init error:', e.message);
+    }
+  </script>
+</body>
+</html>
