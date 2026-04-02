@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff — Calendario Entrate/Uscite</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B4E;--navy2:#1A4A7A;
+  --gold:#C9973A;--gold2:#F0C060;
+  --white:#FFF;--off:#F8FAFD;--bg:#EEF3FA;
+  --text:#0D1F3C;--text2:#4A6080;--text3:#8AA0BC;
+  --border:#D0DCF0;--radius:14px;
+  --green:#16a34a;--green-bg:#dcfce7;
+  --orange:#d97706;--orange-bg:#fef3c7;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --shadow:0 2px 16px rgba(13,43,78,.08);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+
+
+/* TOPBAR */
+.topbar{background:var(--navy);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-logo{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:#fff}
+.topbar-logo span{color:var(--gold2)}
+.topbar-casa{font-size:12px;color:rgba(255,255,255,.6);margin-top:1px}
+
+/* MAIN */
+.main{max-width:600px;margin:0 auto;padding:20px 16px}
+
+/* MONTH NAV */
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.month-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text2);transition:all .18s}
+.month-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.month-label{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy)}
+
+/* EVENTS */
+.events-list{display:flex;flex-direction:column;gap:10px}
+.event-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.event-card.checkin{border-left:4px solid var(--green)}
+.event-card.checkout{border-left:4px solid var(--orange)}
+.event-card.cambio{border-left:4px solid var(--red)}
+.event-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+.event-date{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy);line-height:1}
+.event-day{font-size:11px;color:var(--text3);margin-top:2px}
+.event-badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700}
+.badge-ci{background:var(--green-bg);color:var(--green)}
+.badge-co{background:var(--orange-bg);color:var(--orange)}
+.badge-cambio{background:var(--red-bg);color:var(--red)}
+.event-body{padding:0 16px 14px}
+.event-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--off)}
+.event-row:last-child{border-bottom:none}
+.event-lbl{color:var(--text3);width:90px;flex-shrink:0;font-size:12px}
+.event-val{color:var(--text);font-weight:500}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+</style>
+</head>
+<body>
+
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div>
+    <div class="topbar-logo">📅 Calendario <span>Entrate/Uscite</span></div>
+    <div class="topbar-casa" id="topbarCasa"></div>
+  </div>
+  <button onclick="reload()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">↻ Aggiorna</button>
+</div>
+
+<div class="main">
+  <div class="month-nav">
+    <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button class="month-btn" onclick="changeMonth(1)">›</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Check-in</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div> Check-out</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Cambio</div>
+  </div>
+
+  <div id="eventsList"><div class="loading">Caricamento...</div></div>
+</div>
+
+<script>
+// ── CONFIG ──
+var FB_URL = 'https://casa-manager-24414-default-rtdb.europe-west1.firebasedatabase.app';
+
+// Staff group: Donnamisurata, Villa Gió, Terrazza sul mare
+var STAFF_HOUSES = [
+  {id:4, name:'Casa Duna', emoji:'🌊'},
+];
+
+
+// ── DATA ──
+var curY = new Date().getFullYear();
+var curM = new Date().getMonth();
+var allBookings = [];
+
+function loadBookings() {
+  document.getElementById('eventsList').innerHTML = '<div class="loading">Caricamento...</div>';
+  fetch(FB_URL + '/manual_bookings.json')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      allBookings = [];
+      if(!data) { renderEvents(); return; }
+      STAFF_HOUSES.forEach(function(h){
+        (data['h'+h.id]||[]).forEach(function(b){
+          b._prop = h.emoji + ' ' + h.name;
+          allBookings.push(b);
+        });
+      });
+      renderEvents();
+    })
+    .catch(function(){
+      document.getElementById('eventsList').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div>Errore caricamento dati</div>';
+    });
+}
+
+function reload() { loadBookings(); }
+
+// ── RENDER ──
+var MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+var DAYS   = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function dateStr(y,m,d){ return y+'-'+pad(m+1)+'-'+pad(d); }
+function fmtDate(s){ if(!s)return'—'; var p=s.split('-'); return p[2]+'/'+p[1]; }
+function dayOfWeek(s){ return DAYS[new Date(s+'T12:00:00').getDay()]; }
+function nights(a,b){ return Math.max(0,Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5)); }
+
+function changeMonth(d){
+  curM += d;
+  if(curM > 11){ curM=0; curY++; }
+  if(curM < 0) { curM=11; curY--; }
+  renderEvents();
+}
+
+function renderEvents() {
+  document.getElementById('monthLabel').textContent = MONTHS[curM] + ' ' + curY;
+  var ms = dateStr(curY, curM, 1);
+  var me = dateStr(curY, curM, new Date(curY, curM+1, 0).getDate());
+
+  // Build events: check-in on from date, checkout on to date
+  var events = [];
+  allBookings.forEach(function(b){
+    if(!b.from || !b.to) return;
+    var isCI = b.from >= ms && b.from <= me;
+    var isCO = b.to > ms && b.to <= me;
+
+    // Same day = cambio (checkout + checkin)
+    if(isCI && isCO && b.from === b.to) return;
+
+    if(isCI) events.push({date:b.from, type:'checkin', b:b});
+    if(isCO) events.push({date:b.to,   type:'checkout', b:b});
+  });
+
+  // Detect cambio: same date has both checkout and checkin
+  var byDate = {};
+  events.forEach(function(e){
+    if(!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  });
+
+  // Build final event list
+  var finalEvents = [];
+  Object.keys(byDate).sort().forEach(function(date){
+    var evs = byDate[date];
+    var hasCI = evs.some(function(e){return e.type==='checkin';});
+    var hasCO = evs.some(function(e){return e.type==='checkout';});
+    if(hasCI && hasCO) {
+      // Cambio — merge
+      var ciEvs = evs.filter(function(e){return e.type==='checkin';});
+      var coEvs = evs.filter(function(e){return e.type==='checkout';});
+      finalEvents.push({date:date, type:'cambio', ciList:ciEvs, coList:coEvs});
+    } else {
+      evs.forEach(function(e){ finalEvents.push({date:date, type:e.type, ciList:[e], coList:[e], b:e.b}); });
+    }
+  });
+
+  var el = document.getElementById('eventsList');
+  if(!finalEvents.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🌴</div>Nessun turno questo mese</div>';
+    return;
+  }
+
+  el.innerHTML = finalEvents.map(function(ev){
+    var day = parseInt(ev.date.split('-')[2]);
+    var dow = dayOfWeek(ev.date);
+    var badgeHtml, bodyHtml, cardCls;
+
+    if(ev.type === 'checkin') {
+      var b = ev.b;
+      var n = nights(b.from, b.to);
+      cardCls = 'checkin';
+      badgeHtml = '<span class="event-badge badge-ci">✓ Check-in</span>';
+      bodyHtml =
+        row('Ospite', b.guest||'Prenotazione') +
+        row('Struttura', b._prop||'—') +
+        row('Check-out', fmtDate(b.to) + ' (' + n + ' notti)') +
+        row('Ospiti', (b.numGuests||1) + ' person'+(b.numGuests===1?'a':'e')) +
+        (b.notes ? row('Note', b.notes) : '');
+    } else if(ev.type === 'checkout') {
+      var b = ev.b;
+      cardCls = 'checkout';
+      badgeHtml = '<span class="event-badge badge-co">→ Check-out</span>';
+      bodyHtml =
+        row('Ospite', b.guest||'Prenotazione') +
+        row('Struttura', b._prop||'—') +
+        row('Check-in era', fmtDate(b.from)) +
+        row('Ospiti', (b.numGuests||1) + ' person'+(b.numGuests===1?'a':'e')) +
+        (b.notes ? row('Note', b.notes) : '');
+    } else {
+      // Cambio
+      cardCls = 'cambio';
+      badgeHtml = '<span class="event-badge badge-cambio">↔ Cambio</span>';
+      var coLines = ev.coList.map(function(e){
+        return '<div style="padding:4px 0;border-bottom:1px solid var(--off)"><span style="color:var(--text3);font-size:12px">Uscita: </span><span style="font-weight:500">'+(e.b.guest||'Prenotazione')+'</span> <span style="font-size:12px;color:var(--text3)">'+(e.b._prop||'')+'</span></div>';
+      }).join('');
+      var ciLines = ev.ciList.map(function(e){
+        var n=nights(e.b.from,e.b.to);
+        return '<div style="padding:4px 0;border-bottom:1px solid var(--off)"><span style="color:var(--text3);font-size:12px">Entrata: </span><span style="font-weight:500">'+(e.b.guest||'Prenotazione')+'</span> <span style="font-size:12px;color:var(--text3)">'+(e.b._prop||'')+' · '+(e.b.numGuests||1)+'p · '+n+'n'+(e.b.notes?' · '+e.b.notes:'')+'</span></div>';
+      }).join('');
+      bodyHtml = '<div style="font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">In uscita</div>'+coLines+
+                 '<div style="font-size:12px;color:var(--text3);margin:8px 0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em">In entrata</div>'+ciLines;
+    }
+
+    return '<div class="event-card '+cardCls+'">'+
+      '<div class="event-hdr">'+
+        '<div><div class="event-date">'+pad(day)+'</div><div class="event-day">'+dow+' '+MONTHS[curM].slice(0,3)+'</div></div>'+
+        badgeHtml+
+      '</div>'+
+      '<div class="event-body">'+bodyHtml+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function row(lbl, val) {
+  return '<div class="event-row"><span class="event-lbl">'+lbl+'</span><span class="event-val">'+val+'</span></div>';
+}
+
+// ── INIT ──
+loadBookings();
+</script>
+</body>
+</html>
