@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portale Proprietà</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B4E;--navy2:#1A4A7A;--navy3:#2B6CB0;
+  --gold:#C9973A;--gold2:#F0C060;
+  --white:#FFF;--off:#F8FAFD;--bg:#EEF3FA;
+  --text:#0D1F3C;--text2:#4A6080;--text3:#8AA0BC;
+  --border:#D0DCF0;--radius:14px;
+  --shadow:0 2px 16px rgba(13,43,78,.08);
+  --shadow-md:0 4px 24px rgba(13,43,78,.14);
+  --green:#16a34a;--green-bg:#dcfce7;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --orange:#d97706;--orange-bg:#fef3c7;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+
+/* LOGIN */
+.login{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:28px;z-index:9999}
+.login.hidden{display:none}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:#fff;text-align:center}
+.login-logo span{color:var(--gold2)}
+.login-sub{font-size:13px;color:rgba(255,255,255,.5);margin-top:-20px;text-align:center}
+.login-box{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:28px;width:280px;text-align:center}
+.pin-hint{font-size:13px;color:rgba(255,255,255,.55);margin-bottom:20px}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:24px}
+.pin-dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s}
+.pin-dot.filled{background:var(--gold2)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pin-key{padding:14px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:18px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pin-key:hover{background:rgba(255,255,255,.16)}
+.pin-key:active{transform:scale(.95)}
+.pin-key.empty{visibility:hidden}
+.pin-error{color:#f87171;font-size:12px;margin-top:10px;min-height:18px}
+
+/* TOPBAR */
+.topbar{background:var(--navy);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(13,43,78,.3)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#fff}
+.logo span{color:var(--gold2)}
+.sync-status{font-size:11px;color:rgba(255,255,255,.45)}
+
+/* LAYOUT */
+.wrap{max-width:1100px;margin:0 auto;padding:24px 20px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow)}
+.stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--navy);line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* MONTH SELECTOR */
+.month-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.month-lbl{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy)}
+.month-sel{padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--navy);background:var(--white);outline:none;cursor:pointer}
+
+/* PROPERTY SECTIONS */
+.prop-section{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.prop-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.prop-hdr-left{display:flex;align-items:center;gap:12px}
+.prop-emoji{font-size:24px}
+.prop-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--navy)}
+.prop-summary{display:flex;gap:16px;align-items:center}
+.prop-net{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.prop-net.pos{color:var(--green)}
+.prop-net.neg{color:var(--red)}
+.prop-tog{color:var(--text3);font-size:18px;transition:transform .2s}
+.prop-tog.open{transform:rotate(180deg)}
+.prop-body{display:none;padding:20px}
+.prop-body.open{display:block}
+
+/* FINANCIALS GRID */
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:700px){.fin-grid{grid-template-columns:1fr}}
+
+.fin-panel{border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
+.fin-panel-hdr{background:var(--off);padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy2);border-bottom:1px solid var(--border)}
+.fin-panel-body{padding:12px 14px}
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--off);font-size:13px}
+.fin-row:last-child{border-bottom:none}
+.fin-row-lbl{color:var(--text2)}
+.fin-row-val{font-weight:600;color:var(--navy)}
+.fin-row-val.red{color:var(--red)}
+.fin-row-val.green{color:var(--green)}
+.fin-divider{border:none;border-top:1px dashed var(--border);margin:6px 0}
+
+/* NET BOX */
+.net-box{border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+.net-box.pos{background:var(--green-bg)}
+.net-box.neg{background:var(--red-bg)}
+.net-box.zero{background:var(--off)}
+.net-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.net-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600}
+.net-val.pos{color:var(--green)}
+.net-val.neg{color:var(--red)}
+
+/* COSTS TABLE */
+.costs-section{margin-top:4px}
+.costs-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.costs-title-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2)}
+.add-cost-btn{padding:6px 14px;border-radius:8px;background:var(--navy);color:#fff;font-size:12px;font-weight:600;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .2s}
+.add-cost-btn:hover{opacity:.85}
+.cost-table{width:100%;border-collapse:collapse;font-size:13px}
+.cost-table th{text-align:left;padding:7px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);border-bottom:1px solid var(--border);background:var(--off)}
+.cost-table td{padding:8px 10px;border-bottom:1px solid var(--off);vertical-align:middle}
+.cost-table tr:last-child td{border-bottom:none}
+.cost-table tr:hover td{background:var(--off)}
+.cost-inp{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:'DM Sans',sans-serif;background:var(--off);outline:none}
+.cost-inp:focus{border-color:var(--navy3);background:var(--white)}
+.cost-del{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--off);cursor:pointer;font-size:12px;transition:all .15s}
+.cost-del:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.cost-source{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase}
+.src-prop{background:#fef3c7;color:#92400e}
+.src-gest{background:#dbeafe;color:#1e40af}
+.empty-costs{text-align:center;padding:20px;color:var(--text3);font-size:13px}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(13,43,78,.6);z-index:500;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:20px;box-shadow:0 20px 60px rgba(13,43,78,.2);width:100%;max-width:440px;padding:24px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy);margin-bottom:18px}
+.fg{margin-bottom:12px}
+.fl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:5px;display:block}
+.fi{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--off);outline:none;transition:border .2s}
+.fi:focus{border-color:var(--navy3);background:var(--white)}
+.modal-acts{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.btn{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .18s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{background:var(--off);color:var(--text2);border:1px solid var(--border)}
+
+/* BOOKINGS LIST */
+.bk-list{margin-top:16px}
+.bk-list-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.bk-item{background:var(--off);border-radius:10px;border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;font-size:13px}
+.bk-item:last-child{margin-bottom:0}
+.bk-item-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bk-item-guest{font-weight:600;color:var(--navy);font-size:14px}
+.bk-item-src{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;text-transform:uppercase}
+.src-airbnb{background:#FF5A5F22;color:#d93025}
+.src-booking{background:#003B9522;color:#003B95}
+.src-manuale{background:#16a34a22;color:#16a34a}
+.bk-item-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:500px){.bk-item-grid{grid-template-columns:repeat(2,1fr)}}
+.bk-item-cell{background:var(--white);border-radius:7px;padding:7px 10px;border:1px solid var(--border)}
+.bk-item-cell-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:2px}
+.bk-item-cell-val{font-weight:600;color:var(--navy);font-size:13px}
+.bk-item-cell-val.red{color:var(--red)}
+.bk-item-cell-val.green{color:var(--green)}
+.bk-empty{text-align:center;padding:16px;color:var(--text3);font-size:13px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;transition:transform .3s;z-index:999;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* YEARLY */
+.yearly-section{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.yearly-hdr{padding:16px 20px;border-bottom:1px solid var(--border);font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--navy)}
+.yearly-body{padding:20px}
+.yearly-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:500px){.yearly-grid{grid-template-columns:1fr}}
+.yearly-stat{background:var(--off);border-radius:10px;padding:14px;border:1px solid var(--border);text-align:center}
+.yearly-stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:6px}
+.yearly-stat-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--navy)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="loginScreen">
+  <div class="login-logo">🏠 Portale <span>Proprietà</span></div>
+  <div class="login-sub">Villa Gió · Terrazza sul mare · Donnamisurata</div>
+  <div class="login-box">
+    <div class="pin-hint">Inserisci il PIN per accedere</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key" style="font-size:14px" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">🏠 Portale <span>Proprietà</span></div>
+  <div class="sync-status" id="syncStatus"></div>
+</div>
+
+<div class="wrap">
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-lbl">Entrate mese</div>
+      <div class="stat-val" id="sTotEnt">€ —</div>
+      <div class="stat-sub">tutte le strutture</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Costi mese</div>
+      <div class="stat-val" id="sTotCosti">€ —</div>
+      <div class="stat-sub">tutte le strutture</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Utile netto</div>
+      <div class="stat-val" id="sTotUtile">€ —</div>
+      <div class="stat-sub">tutte le strutture</div>
+    </div>
+    <div class="stat">
+      <div class="stat-lbl">Notti occupate</div>
+      <div class="stat-val" id="sTotNotti">—</div>
+      <div class="stat-sub">tutte le strutture</div>
+    </div>
+  </div>
+
+  <!-- MONTH SELECTOR -->
+  <div class="month-bar">
+    <div class="month-lbl">Entrate &amp; Costi</div>
+    <select class="month-sel" id="selMonth" onchange="render()">
+      <option value="0">Gennaio</option><option value="1">Febbraio</option>
+      <option value="2">Marzo</option><option value="3">Aprile</option>
+      <option value="4">Maggio</option><option value="5">Giugno</option>
+      <option value="6">Luglio</option><option value="7">Agosto</option>
+      <option value="8">Settembre</option><option value="9">Ottobre</option>
+      <option value="10">Novembre</option><option value="11">Dicembre</option>
+    </select>
+  </div>
+
+  <!-- PROPERTIES -->
+  <div id="propList"></div>
+
+  <!-- YEARLY -->
+  <div class="yearly-section">
+    <div class="yearly-hdr">📅 Riepilogo Annuale <span id="yearLbl" style="color:var(--text3);font-size:16px"></span></div>
+    <div class="yearly-body">
+      <div class="yearly-grid" id="yearlyGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD COST MODAL -->
+<div class="overlay" id="mCost">
+  <div class="modal">
+    <div class="modal-title" id="mCostTitle">Aggiungi costo</div>
+    <input type="hidden" id="mCostPropId">
+    <div class="fg">
+      <label class="fl">Descrizione *</label>
+      <input class="fi" id="mCostDesc" type="text" placeholder="es. Manutenzione, Utenza, Tassa...">
+    </div>
+    <div class="fg">
+      <label class="fl">Importo (€) *</label>
+      <input class="fi" id="mCostAmt" type="number" placeholder="0" min="0" step="0.01">
+    </div>
+    <div class="fg">
+      <label class="fl">Data</label>
+      <input class="fi" id="mCostDate" type="date">
+    </div>
+    <div class="fg">
+      <label class="fl">Note (opzionale)</label>
+      <input class="fi" id="mCostNote" type="text" placeholder="es. Fattura n. 123...">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveCost()">✓ Salva</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
+var PIN = '5678';
+var PIN_KEY = 'owner_auth';
+var PIN_DAYS = 30;
+var FB_URL = 'https://casa-manager-24414-default-rtdb.europe-west1.firebasedatabase.app';
+
+var PROPS = [
+  {id: 2, key: 'h2', name: 'Villa Gió',         emoji: '🌺', addr: 'Sampieri'},
+  {id: 1, key: 'h1', name: 'Terrazza sul mare',  emoji: '🌅', addr: 'Donnalucata'},
+  {id: 3, key: 'h3', name: 'Donnamisurata',      emoji: '🏡', addr: 'Sampieri'},
+];
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function euro(n){ return '€ ' + Math.round(n).toLocaleString('it-IT'); }
+function td(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(function(){t.classList.remove('show')},2800); }
+function closeModal(){ document.getElementById('mCost').classList.remove('open'); }
+function getNum(id){ return parseFloat(document.getElementById(id).value)||0; }
+function setVal(id,v){ var e=document.getElementById(id); if(e)e.value=v||''; }
+
+// ══════════════════════════════════════════════
+// PIN LOGIN
+// ══════════════════════════════════════════════
+var pinEntry = '';
+function checkAuth(){
+  var s=JSON.parse(localStorage.getItem(PIN_KEY)||'null');
+  if(s && Date.now()<s.expires){ document.getElementById('loginScreen').classList.add('hidden'); return true; }
+  return false;
+}
+function pinPress(d){ if(pinEntry.length>=4)return; pinEntry+=d; updateDots(); if(pinEntry.length===4)setTimeout(checkPin,200); }
+function pinDel(){ pinEntry=pinEntry.slice(0,-1); updateDots(); document.getElementById('pinError').textContent=''; }
+function updateDots(){ for(var i=0;i<4;i++){ var dot=document.getElementById('pd'+i); if(dot)dot.classList.toggle('filled',i<pinEntry.length); } }
+function checkPin(){
+  if(pinEntry===PIN){
+    localStorage.setItem(PIN_KEY,JSON.stringify({expires:Date.now()+PIN_DAYS*864e5}));
+    document.getElementById('loginScreen').classList.add('hidden');
+    init();
+  } else {
+    document.getElementById('pinError').textContent='PIN errato, riprova';
+    pinEntry=''; updateDots();
+  }
+}
+document.addEventListener('keydown',function(e){
+  if(document.getElementById('loginScreen').classList.contains('hidden'))return;
+  if(e.key>='0'&&e.key<='9')pinPress(e.key);
+  if(e.key==='Backspace')pinDel();
+});
+
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+var bookingsData = {};   // {h1: [...], h2: [...], h3: [...]}
+var ownerCosts = {};     // {h1: [...], h2: [...], h3: [...]}
+var OC_KEY = 'cm_owner_costs_v1';
+
+function loadOwnerCosts(){
+  ownerCosts = JSON.parse(localStorage.getItem(OC_KEY)||'{}');
+}
+function saveOwnerCosts(){
+  localStorage.setItem(OC_KEY, JSON.stringify(ownerCosts));
+  // Also sync to Firebase
+  fetch(FB_URL+'/owner_costs.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ownerCosts)})
+    .catch(function(e){console.warn('Save error:',e);});
+}
+
+function loadFromFirebase(cb){
+  var status = document.getElementById('syncStatus');
+  if(status) status.textContent = 'Sincronizzazione...';
+  // Load bookings
+  fetch(FB_URL+'/manual_bookings.json')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      bookingsData = d || {};
+      // Load owner costs from Firebase
+      return fetch(FB_URL+'/owner_costs.json');
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d && typeof d==='object') {
+        ownerCosts = d;
+        localStorage.setItem(OC_KEY, JSON.stringify(ownerCosts));
+      }
+      if(status) status.textContent = 'Aggiornato '+new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+      if(cb) cb();
+    })
+    .catch(function(){
+      if(status) status.textContent = 'Errore connessione';
+      if(cb) cb();
+    });
+}
+
+// ══════════════════════════════════════════════
+// FINANCIAL CALCULATIONS
+// ══════════════════════════════════════════════
+function nights(a,b){ return Math.max(0,Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5)); }
+
+function monthRevenue(bks, ms, me){
+  var rev=0,nts=0,guests=0,cityTax=0,plat=0,prop=0,pulizie=0,biancheria=0,spesaOrd=0,spesaStr=0;
+  (bks||[]).forEach(function(b){
+    if(b.from<=me&&b.to>ms){
+      var f=b.from<ms?ms:b.from, t=b.to>me?me:b.to;
+      var n=Math.round((new Date(t+'T12:00:00')-new Date(f+'T12:00:00'))/864e5);
+      rev     +=(b.rate   ||0)*n;
+      cityTax +=(b.cityTax||0)*(b.numGuests||1)*n;
+      nts     +=n; guests+=(b.numGuests||1);
+      var ciInMonth=b.from>=ms&&b.from<=me;
+      if(ciInMonth){
+        plat      +=(b.plat      ||0);
+        prop      +=(b.prop      ||0);
+        pulizie   +=(b.pulizie   ||0);
+        biancheria+=(b.biancheria||0);
+        spesaOrd  +=(b.spesaOrd  ||0);
+        spesaStr  +=(b.spesaStr  ||0);
+      }
+    }
+  });
+  var lorde=rev+cityTax;
+  var bkCosts=plat+prop+pulizie+biancheria+spesaOrd+spesaStr;
+  return {rev:rev,cityTax:cityTax,lorde:lorde,nts:nts,guests:guests,
+          plat:plat,prop:prop,pulizie:pulizie,biancheria:biancheria,
+          spesaOrd:spesaOrd,spesaStr:spesaStr,bkCosts:bkCosts,
+          avgRate:nts>0?Math.round(rev/nts):0};
+}
+
+function getOwnerCostsForMonth(propKey, ms, me){
+  var costs = (ownerCosts[propKey]||[]).filter(function(c){
+    return c.date>=ms && c.date<=me;
+  });
+  var total = costs.reduce(function(s,c){return s+(parseFloat(c.amount)||0);},0);
+  return {costs:costs, total:total};
+}
+
+function getOwnerCostsForYear(propKey, year){
+  var ys=year+'-01-01', ye=year+'-12-31';
+  var costs=(ownerCosts[propKey]||[]).filter(function(c){return c.date>=ys&&c.date<=ye;});
+  return costs.reduce(function(s,c){return s+(parseFloat(c.amount)||0);},0);
+}
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function getMonthRange(){
+  var sel=document.getElementById('selMonth');
+  if(!sel.dataset.init){sel.value=new Date().getMonth();sel.dataset.init='1';}
+  var m=parseInt(sel.value), y=new Date().getFullYear();
+  var ms=y+'-'+String(m+1).padStart(2,'0')+'-01';
+  var me=y+'-'+String(m+1).padStart(2,'0')+'-'+String(new Date(y,m+1,0).getDate()).padStart(2,'0');
+  return {ms:ms,me:me,m:m,y:y};
+}
+
+function render(){
+  var range=getMonthRange();
+  var grandEnt=0,grandCosti=0,grandUtile=0,grandNotti=0;
+  var list=document.getElementById('propList');
+  list.innerHTML='';
+
+  PROPS.forEach(function(p){
+    var bks=bookingsData[p.key]||[];
+    var mr=monthRevenue(bks,range.ms,range.me);
+    var oc=getOwnerCostsForMonth(p.key,range.ms,range.me);
+    var totalCosts=mr.bkCosts+oc.total;
+    var utile=mr.lorde-totalCosts;
+    var nc=utile>0?'pos':utile<0?'neg':'zero';
+
+    grandEnt+=mr.lorde; grandCosti+=totalCosts; grandUtile+=utile; grandNotti+=mr.nts;
+
+    // Build card HTML
+    var card=document.createElement('div');
+    card.className='prop-section';
+    card.innerHTML=
+      '<div class="prop-hdr" onclick="toggleProp(\''+p.key+'\')">' +
+        '<div class="prop-hdr-left">' +
+          '<span class="prop-emoji">'+p.emoji+'</span>' +
+          '<div>' +
+            '<div class="prop-name">'+p.name+'</div>' +
+            '<div style="font-size:12px;color:var(--text3)">'+p.addr+'</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="prop-summary">' +
+          '<div>' +
+            '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)">Utile netto</div>' +
+            '<div class="prop-net '+nc+'">'+euro(utile)+'</div>' +
+          '</div>' +
+          '<span class="prop-tog" id="tog-'+p.key+'">⌄</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prop-body" id="body-'+p.key+'"></div>';
+    list.appendChild(card);
+
+    // Fill body
+    var body=card.querySelector('.prop-body');
+
+    // Entrate panel
+    var entHtml='<div class="fin-panel-body">';
+    entHtml+='<div class="fin-row"><span class="fin-row-lbl">Notti occupate</span><span class="fin-row-val">'+mr.nts+'</span></div>';
+    entHtml+='<div class="fin-row"><span class="fin-row-lbl">Ospiti</span><span class="fin-row-val">'+mr.guests+'</span></div>';
+    entHtml+='<div class="fin-row"><span class="fin-row-lbl">Tariffa media/notte</span><span class="fin-row-val">'+euro(mr.avgRate)+'</span></div>';
+    entHtml+='<div class="fin-row"><span class="fin-row-lbl">Entrate soggiorni</span><span class="fin-row-val">'+euro(mr.rev)+'</span></div>';
+    entHtml+='<div class="fin-row"><span class="fin-row-lbl">Tassa soggiorno</span><span class="fin-row-val">'+euro(mr.cityTax)+'</span></div>';
+    entHtml+='<div class="fin-row"><span class="fin-row-lbl" style="font-weight:700;color:var(--navy)">Entrate lorde</span><span class="fin-row-val" style="font-size:16px">'+euro(mr.lorde)+'</span></div>';
+    entHtml+='</div>';
+
+    // Costi panel
+    var costiHtml='<div class="fin-panel-body">';
+    costiHtml+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:6px">Dalla gestione</div>';
+    costiHtml+='<div class="fin-row"><span class="fin-row-lbl">Costo piattaforma</span><span class="fin-row-val red">-'+euro(mr.plat)+'</span></div>';
+    costiHtml+='<div class="fin-row"><span class="fin-row-lbl">Costo proprietà</span><span class="fin-row-val red">-'+euro(mr.prop)+'</span></div>';
+    costiHtml+='<div class="fin-row"><span class="fin-row-lbl">Pulizie</span><span class="fin-row-val red">-'+euro(mr.pulizie)+'</span></div>';
+    costiHtml+='<div class="fin-row"><span class="fin-row-lbl">Biancheria</span><span class="fin-row-val red">-'+euro(mr.biancheria)+'</span></div>';
+    costiHtml+='<div class="fin-row"><span class="fin-row-lbl">Spesa ordinaria</span><span class="fin-row-val red">-'+euro(mr.spesaOrd)+'</span></div>';
+    costiHtml+='<div class="fin-row"><span class="fin-row-lbl">Spesa straordinaria</span><span class="fin-row-val red">-'+euro(mr.spesaStr)+'</span></div>';
+    if(oc.total>0){
+      costiHtml+='<hr class="fin-divider">';
+      costiHtml+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:6px;margin-top:6px">Dalla proprietà</div>';
+      costiHtml+='<div class="fin-row"><span class="fin-row-lbl">Costi aggiuntivi</span><span class="fin-row-val red">-'+euro(oc.total)+'</span></div>';
+    }
+    costiHtml+='<hr class="fin-divider">';
+    costiHtml+='<div class="fin-row"><span class="fin-row-lbl" style="font-weight:700;color:var(--navy)">Totale costi</span><span class="fin-row-val red" style="font-size:16px">-'+euro(totalCosts)+'</span></div>';
+    costiHtml+='</div>';
+
+    var bkListHtml = buildBookingList(bks, range.ms, range.me);
+
+    body.innerHTML=
+      '<div class="fin-grid">' +
+        '<div class="fin-panel"><div class="fin-panel-hdr">📈 Entrate</div>'+entHtml+'</div>' +
+        '<div class="fin-panel"><div class="fin-panel-hdr">📉 Costi</div>'+costiHtml+'</div>' +
+      '</div>' +
+      '<div class="net-box '+nc+'">' +
+        '<span class="net-lbl">Utile netto del mese</span>' +
+        '<span class="net-val '+nc+'">'+euro(utile)+'</span>' +
+      '</div>' +
+      '<div class="bk-list" style="margin-top:20px">' + bkListHtml + '</div>' +
+      '<div class="costs-section" style="margin-top:16px">' +
+        buildCostsTable(p.key, oc.costs) +
+      '</div>';
+  });
+
+  // Update stats
+  document.getElementById('sTotEnt').textContent=euro(grandEnt);
+  document.getElementById('sTotCosti').textContent=euro(grandCosti);
+  document.getElementById('sTotUtile').textContent=euro(grandUtile);
+  document.getElementById('sTotNotti').textContent=grandNotti;
+
+  // Yearly
+  renderYearly(range.y);
+}
+
+function buildBookingList(bks, ms, me) {
+  var filtered = (bks||[]).filter(function(b){ return b.from<=me && b.to>ms; })
+    .sort(function(a,b){ return a.from.localeCompare(b.from); });
+
+  var html = '<div class="bk-list-title">📋 Prenotazioni del mese</div>';
+
+  if(!filtered.length) {
+    return html + '<div class="bk-empty">Nessuna prenotazione questo mese</div>';
+  }
+
+  html += filtered.map(function(b){
+    var n = b.nights || Math.round((new Date(b.to+'T12:00:00')-new Date(b.from+'T12:00:00'))/864e5);
+    var rev = (b.rate||0)*n + (b.cityTax||0)*(b.numGuests||1)*n;
+    var costs = (b.plat||0)+(b.prop||0)+(b.pulizie||0)+(b.biancheria||0)+(b.spesaOrd||0)+(b.spesaStr||0);
+    var net = rev - costs;
+    var srcCls = 'src-'+(b.source||'manuale');
+    var srcLbl = b.source==='airbnb'?'Airbnb':b.source==='booking'?'Booking':'Manuale';
+    var fmt = function(s){ if(!s)return'—'; var p=s.split('-'); return p[2]+'/'+p[1]; };
+
+    return '<div class="bk-item">' +
+      '<div class="bk-item-hdr">' +
+        '<span class="bk-item-guest">'+(b.guest||'Prenotazione')+'</span>' +
+        '<span class="bk-item-src '+srcCls+'">'+srcLbl+'</span>' +
+      '</div>' +
+      '<div class="bk-item-grid">' +
+        '<div class="bk-item-cell"><div class="bk-item-cell-lbl">Check-in</div><div class="bk-item-cell-val">'+fmt(b.from)+'</div></div>' +
+        '<div class="bk-item-cell"><div class="bk-item-cell-lbl">Check-out</div><div class="bk-item-cell-val">'+fmt(b.to)+'</div></div>' +
+        '<div class="bk-item-cell"><div class="bk-item-cell-lbl">Notti · Ospiti</div><div class="bk-item-cell-val">'+n+' · '+(b.numGuests||1)+'</div></div>' +
+        '<div class="bk-item-cell"><div class="bk-item-cell-lbl">Tariffa/notte</div><div class="bk-item-cell-val">'+euro(b.rate||0)+'</div></div>' +
+        '<div class="bk-item-cell"><div class="bk-item-cell-lbl">Entrate</div><div class="bk-item-cell-val green">'+euro(rev)+'</div></div>' +
+        '<div class="bk-item-cell"><div class="bk-item-cell-lbl">Costi</div><div class="bk-item-cell-val red">-'+euro(costs)+'</div></div>' +
+      '</div>' +
+      (b.notes ? '<div style="margin-top:8px;font-size:12px;color:var(--text2)">📝 '+b.notes+'</div>' : '') +
+    '</div>';
+  }).join('');
+
+  return html;
+}
+
+function buildCostsTable(propKey, costs){
+  var html='<div class="costs-title">';
+  html+='<span class="costs-title-lbl">🗂 Costi aggiuntivi proprietà</span>';
+  html+='<button class="add-cost-btn" data-pk="'+propKey+'" onclick="openAddCost(this)">+ Aggiungi costo</button>';
+  html+='</div>';
+
+  if(!costs||!costs.length){
+    html+='<div class="empty-costs">Nessun costo aggiunto per questo mese</div>';
+    return html;
+  }
+
+  html+='<table class="cost-table"><thead><tr><th>Data</th><th>Descrizione</th><th>Note</th><th>Importo</th><th></th></tr></thead><tbody>';
+  costs.forEach(function(c){
+    var dt=c.date?c.date.split('-').reverse().join('/'):'—';
+    html+='<tr>' +
+      '<td>'+dt+'</td>' +
+      '<td><strong>'+c.desc+'</strong></td>' +
+      '<td style="color:var(--text3)">'+( c.note||'—')+'</td>' +
+      '<td style="font-weight:600;color:var(--red)">-'+euro(c.amount)+'</td>' +
+      '<td><button class="cost-del" data-pk="'+propKey+'" data-cid="'+c.id+'" onclick="deleteCost(this)">✕</button></td>' +
+    '</tr>';
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
+function renderYearly(year){
+  document.getElementById('yearLbl').textContent=year;
+  var grandRev=0,grandCosts=0;
+
+  PROPS.forEach(function(p){
+    var bks=bookingsData[p.key]||[];
+    var ys=year+'-01-01',ye=year+'-12-31';
+    // Sum all months
+    for(var m=0;m<12;m++){
+      var ms=year+'-'+String(m+1).padStart(2,'0')+'-01';
+      var me=year+'-'+String(m+1).padStart(2,'0')+'-'+String(new Date(year,m+1,0).getDate()).padStart(2,'0');
+      var mr=monthRevenue(bks,ms,me);
+      grandRev+=mr.lorde;
+      grandCosts+=mr.bkCosts;
+    }
+    grandCosts+=getOwnerCostsForYear(p.key,year);
+  });
+
+  var utile=grandRev-grandCosts;
+  var margin=grandRev>0?Math.round(utile/grandRev*100):0;
+  var nc=utile>=0?'var(--green)':'var(--red)';
+
+  document.getElementById('yearlyGrid').innerHTML=
+    ystat('Entrate totali',euro(grandRev))+
+    ystat('Costi totali',euro(grandCosts))+
+    ystat('Utile netto',euro(utile),nc)+
+    '<div class="yearly-stat" style="grid-column:1/-1;max-width:200px;margin:0 auto">' +
+      '<div class="yearly-stat-lbl">Margine %</div>' +
+      '<div class="yearly-stat-val" style="color:'+nc+'">'+margin+'%</div>' +
+    '</div>';
+}
+
+function ystat(lbl,val,color){
+  return '<div class="yearly-stat"><div class="yearly-stat-lbl">'+lbl+'</div><div class="yearly-stat-val" style="color:'+(color||'var(--navy)')+'">'+val+'</div></div>';
+}
+
+function toggleProp(key){
+  var b=document.getElementById('body-'+key),t=document.getElementById('tog-'+key);
+  if(b){b.classList.toggle('open');t&&t.classList.toggle('open');}
+}
+
+// ══════════════════════════════════════════════
+// ADD COST
+// ══════════════════════════════════════════════
+var currentPropKey='';
+function openAddCost(btn){
+  currentPropKey=btn.dataset.pk;
+  var p=PROPS.find(function(x){return x.key===currentPropKey;});
+  document.getElementById('mCostTitle').textContent='Aggiungi costo — '+(p?p.name:'');
+  document.getElementById('mCostPropId').value=currentPropKey;
+  document.getElementById('mCostDesc').value='';
+  document.getElementById('mCostAmt').value='';
+  document.getElementById('mCostDate').value=td();
+  document.getElementById('mCostNote').value='';
+  document.getElementById('mCost').classList.add('open');
+  setTimeout(function(){document.getElementById('mCostDesc').focus();},100);
+}
+
+function saveCost(){
+  var propKey=document.getElementById('mCostPropId').value;
+  var desc=document.getElementById('mCostDesc').value.trim();
+  var amount=getNum('mCostAmt');
+  var date=document.getElementById('mCostDate').value;
+  var note=document.getElementById('mCostNote').value.trim();
+
+  if(!desc){toast('Inserisci una descrizione');return;}
+  if(!amount){toast('Inserisci un importo');return;}
+  if(!date){toast('Inserisci una data');return;}
+
+  if(!ownerCosts[propKey]) ownerCosts[propKey]=[];
+  ownerCosts[propKey].push({id:Date.now(),desc:desc,amount:amount,date:date,note:note,by:'proprietà'});
+  saveOwnerCosts();
+  closeModal();
+  render();
+  toast('✓ Costo salvato');
+}
+
+function deleteCost(btn){
+  if(!confirm('Eliminare questo costo?'))return;
+  var pk=btn.dataset.pk,cid=String(btn.dataset.cid);
+  if(!ownerCosts[pk])return;
+  ownerCosts[pk]=ownerCosts[pk].filter(function(c){return String(c.id)!==cid;});
+  saveOwnerCosts();
+  render();
+  toast('Costo eliminato');
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function init(){
+  loadOwnerCosts();
+  loadFromFirebase(function(){render();});
+  setInterval(function(){loadFromFirebase(function(){render();});}, 5*60*1000);
+}
+
+window.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('mCost').addEventListener('click',function(e){if(e.target===this)closeModal();});
+  if(checkAuth()) init();
+});
+</script>
+</body>
+</html>
