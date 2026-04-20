@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terrazza sul Mare — Guida Ospiti</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<style>
+  :root {
+    --sand: #f5efe6;
+    --sand-deep: #e8ddd0;
+    --sea: #2d6a7f;
+    --sea-light: #4a8fa6;
+    --sea-pale: #d4e8ef;
+    --dusk: #8b6f5e;
+    --text: #2a2118;
+    --text-soft: #6b5a4e;
+    --white: #fefcfa;
+    --radius: 2rem;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sand);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background wave decoration */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 40vh;
+    background: linear-gradient(180deg, #d4e8ef 0%, transparent 100%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 1.25rem 4rem;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    animation: fadeDown 0.8s ease both;
+  }
+
+  .wave-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    display: block;
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 300;
+    color: var(--sea);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  header h1 em {
+    font-style: italic;
+    color: var(--dusk);
+  }
+
+  header p {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* WELCOME CARD */
+  .welcome-card {
+    background: var(--sea);
+    color: white;
+    border-radius: var(--radius);
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.75rem;
+    animation: fadeUp 0.8s 0.2s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .welcome-card::before {
+    content: '🌊';
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 3rem;
+    opacity: 0.15;
+  }
+
+  .welcome-card h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    margin-bottom: 0.75rem;
+  }
+
+  .welcome-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .welcome-card ul li {
+    font-size: 0.88rem;
+    font-weight: 300;
+    opacity: 0.92;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+  }
+
+  .welcome-card ul li span.icon {
+    flex-shrink: 0;
+  }
+
+  /* SEARCH BOX */
+  .search-wrap {
+    animation: fadeUp 0.8s 0.35s ease both;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: var(--white);
+    border-radius: 100px;
+    padding: 0.85rem 1.25rem;
+    box-shadow: 0 4px 24px rgba(45,106,127,0.12), 0 1px 4px rgba(0,0,0,0.06);
+    gap: 0.75rem;
+    transition: box-shadow 0.2s;
+  }
+
+  .search-box:focus-within {
+    box-shadow: 0 6px 32px rgba(45,106,127,0.2), 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  .search-icon {
+    font-size: 1.1rem;
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
+
+  #searchInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text);
+    background: transparent;
+  }
+
+  #searchInput::placeholder {
+    color: #b0a090;
+    font-weight: 300;
+  }
+
+  #sendBtn {
+    background: var(--sea);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.15s;
+    font-size: 0.9rem;
+  }
+
+  #sendBtn:hover { background: var(--sea-light); transform: scale(1.05); }
+  #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* FAQ CHIPS */
+  .chips-wrap {
+    animation: fadeUp 0.8s 0.5s ease both;
+    margin-bottom: 2rem;
+  }
+
+  .chips-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-soft);
+    margin-bottom: 0.6rem;
+    padding-left: 0.25rem;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .chip {
+    background: var(--white);
+    border: 1px solid var(--sand-deep);
+    border-radius: 100px;
+    padding: 0.45rem 1rem;
+    font-size: 0.82rem;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+
+  .chip:hover {
+    background: var(--sea-pale);
+    border-color: var(--sea-light);
+    color: var(--sea);
+  }
+
+  /* CONVERSATION */
+  #conversation {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .msg {
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .msg.user {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .msg.user .bubble {
+    background: var(--sea);
+    color: white;
+    border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+    padding: 0.75rem 1.1rem;
+    max-width: 80%;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .msg.bot .bubble {
+    background: var(--white);
+    color: var(--text);
+    border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+    padding: 0.9rem 1.2rem;
+    max-width: 88%;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+
+  .msg.bot .bubble strong { color: var(--sea); }
+
+  .msg-time {
+    font-size: 0.7rem;
+    color: var(--text-soft);
+    margin-top: 0.3rem;
+    padding: 0 0.25rem;
+    opacity: 0.6;
+  }
+
+  .msg.user .msg-time { text-align: right; }
+
+  /* TYPING */
+  .typing-dots {
+    display: flex;
+    gap: 4px;
+    padding: 0.2rem 0;
+  }
+
+  .typing-dots span {
+    width: 7px; height: 7px;
+    background: var(--sea-light);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+    40% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* CONTACT BAR */
+  .contact-bar {
+    margin-top: 2.5rem;
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    animation: fadeUp 0.8s 0.7s ease both;
+  }
+
+  .contact-bar p {
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    font-weight: 300;
+  }
+
+  .contact-bar strong {
+    display: block;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .contact-btn {
+    background: var(--sea);
+    color: white;
+    text-decoration: none;
+    border-radius: 100px;
+    padding: 0.55rem 1.1rem;
+    font-size: 0.82rem;
+    font-family: 'DM Sans', sans-serif;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .contact-btn:hover { background: var(--sea-light); }
+
+  /* ANIMATIONS */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* DIVIDER */
+  .divider {
+    text-align: center;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-soft);
+    opacity: 0.5;
+    margin: 1.5rem 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <span class="wave-icon">🏖️</span>
+    <h1>Terrazza sul Mare<br><em>Guida Ospiti</em></h1>
+    <p>Via Massa 19 · Donnalucata</p>
+  </header>
+
+  <!-- WELCOME CARD -->
+  <div class="welcome-card">
+    <h2>Benvenuto! Prima di iniziare...</h2>
+    <ul>
+      <li><span class="icon">🦶</span><span>Lava sempre i piedi al lavapiedi esterno prima di usare la doccia — la sabbia ostruisce gli scarichi</span></li>
+      <li><span class="icon">⚡</span><span>Non usare A/C, forno, lavatrice e boiler insieme — potrebbe saltare la corrente. Il quadro elettrico è sopra il divano</span></li>
+      <li><span class="icon">🔑</span><span>Check-in dalle 15:00 · Check-out entro le 10:00</span></li>
+    </ul>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Chiedimi qualsiasi cosa sulla casa..." autocomplete="off" />
+      <button id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <!-- CHIPS -->
+  <div class="chips-wrap">
+    <div class="chips-label">Domande frequenti</div>
+    <div class="chips">
+      <button class="chip" onclick="askChip(this)">📶 WiFi</button>
+      <button class="chip" onclick="askChip(this)">🔑 Check-in / Check-out</button>
+      <button class="chip" onclick="askChip(this)">🚗 Parcheggio</button>
+      <button class="chip" onclick="askChip(this)">🍽️ Ristoranti</button>
+      <button class="chip" onclick="askChip(this)">🗑️ Spazzatura</button>
+      <button class="chip" onclick="askChip(this)">🏖️ Spiaggia</button>
+      <button class="chip" onclick="askChip(this)">🆘 Emergenze</button>
+      <button class="chip" onclick="askChip(this)">🛒 Supermercato</button>
+    </div>
+  </div>
+
+  <!-- CONVERSATION -->
+  <div id="conversation"></div>
+
+  <!-- CONTACT BAR -->
+  <div class="contact-bar">
+    <div>
+      <p>Hai bisogno di aiuto?</p>
+      <strong>Contatta Fabrizio</strong>
+    </div>
+    <a class="contact-btn" href="https://wa.me/393490069083">💬 WhatsApp</a>
+  </div>
+
+</div>
+
+<script>
+// ─── FIREBASE CONFIG ───────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyExample",                   // ← sostituisci con la tua config
+  authDomain: "casa-manager-24414.firebaseapp.com",
+  databaseURL: "https://casa-manager-24414-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "casa-manager-24414"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ─── SESSION ───────────────────────────────────────────────────────
+const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const sessionRef = db.ref('guide_chat/terrazza_sul_mare/' + sessionId);
+let sessionStarted = false;
+let chatHistory = [];
+
+// ─── SYSTEM PROMPT ─────────────────────────────────────────────────
+const SYSTEM = `Sei l'assistente virtuale della casa vacanze "Terrazza sul Mare" a Donnalucata, Sicilia. 
+Rispondi sempre in modo cordiale, breve e utile. Rileva la lingua del messaggio dell'ospite e rispondi nella stessa lingua (italiano o inglese).
+
+INFORMAZIONI SULLA CASA:
+- Nome: Terrazza sul Mare
+- Indirizzo: Via Massa 19, Donnalucata
+- Link Maps casa: https://maps.app.goo.gl/3Rq3exS6gARhKY289
+- Contatto host Fabrizio: +39 349 006 9083 (WhatsApp)
+
+WIFI:
+- Rete: TIM-70819494
+- Password: ybhSFUb27PsFHu6SzHcXNcZF
+
+CHECK-IN / CHECK-OUT:
+- Arrivo: dalle 15:00
+- Partenza: entro le 10:00
+- Il check-in è gestito di persona. Per situazioni particolari si può richiedere il self check-in. Per orari diversi contattare Fabrizio in anticipo.
+
+PARCHEGGIO:
+- Vicolo cieco Via Ischia, dietro la casa: https://maps.app.goo.gl/EXrAc9atsuXaXhw47
+- In alta stagione potrebbe essere difficile trovare posto vicino, è normale.
+
+PROBLEMI NOTI E SOLUZIONI:
+1. SABBIA NELLA DOCCIA: Prima di usare la doccia, lavare sempre i piedi al lavapiedi esterno vicino alle scale di discesa al mare. La sabbia ostruisce gli scarichi e causa gravi problemi.
+2. BLACKOUT ELETTRICO: Non usare contemporaneamente A/C + forno + lavatrice + boiler. Se salta la corrente, il quadro elettrico è sopra il divano — basta rialzare le leve.
+
+REGOLE CASA:
+- No sabbia nelle docce interne
+- No fumo all'interno (consentito in terrazza e giardino)
+- Animali domestici benvenuti con autorizzazione preventiva
+- No feste senza accordo preventivo
+- Trattare la casa con rispetto
+
+SPAZZATURA (box fuori dal cancello a destra, la sera prima):
+- Lunedì: Organico + Vetro
+- Martedì: Carta + Pannolini
+- Mercoledì: Plastica + Pannolini
+- Giovedì: Organico + Lattine
+- Venerdì: Indifferenziata
+- Sabato: Organico + Pannolini
+I sacchetti sono in cucina nel cassetto in basso.
+
+RISTORANTI E LOCALI CONSIGLIATI:
+- Mezzaparola (0932937474) — pesce fresco
+- A Varcuzza (3315686212) — pesce fresco e pizza gourmet
+- Giro di Vite (3273663873) — ristorante e pizzeria
+- Sabir (3791490738) — beach club, aperitivo, ristorante, pizzeria
+- Jammola (3714309149) — beach club, aperitivo, ristorante, pizzeria
+- Bar Riviera (3284293339) — colazioni e granite
+- Blue Moon (0932938158) — gelateria storica di Donnalucata
+- Tentazioni di Zucchero (347 015 0900) — pasticceria
+
+SHOPPING:
+- Supermercato VOI — nel centro di Donnalucata
+- Supermercato Conad — grande, fuori paese
+- Pescheria — pesce fresco locale
+- Panificio Giavatto — pane fresco
+- Farmacia Criscione
+
+SPIAGGIA:
+- La spiaggia è a pochi passi dalla casa
+- Meglio di mattina presto: silenzio, mare piatto, colori unici
+- Bellissimo anche il bagno al tramonto
+
+LUOGHI DA VISITARE:
+- Scicli (barocco, chiese e palazzi nobiliari)
+- Modica (barocco, famosa per il cioccolato)
+- Ragusa Ibla (duomo, giardino Ibleo)
+- Noto (barocco, cattedrale)
+- Siracusa (Ortigia, teatro greco)
+
+TRASPORTI:
+- Bus locale: fermata vicino alla pescheria
+- Transfer e noleggio auto: Carmine — 328 415 1840
+- Treno: stazione di Scicli
+- Aeroporto Catania Fontanarossa: 90 minuti
+- Aeroporto Comiso: 45 minuti
+
+EMERGENZE:
+- 112 Carabinieri
+- 118 Ambulanza
+- Guardia Medica: Via Savona 341 Donnalucata — +39 0932 930056
+
+Se non conosci la risposta a una domanda, suggerisci di contattare Fabrizio su WhatsApp al +39 349 006 9083.
+Rispondi sempre in modo conciso — massimo 3-4 frasi salvo che la domanda richieda più dettagli.`;
+
+// ─── EMAILJS NOTIFICATION ──────────────────────────────────────────
+// Nota: configura EmailJS su emailjs.com e inserisci i tuoi ID qui
+function sendEmailNotification(firstMessage) {
+  // EmailJS - da configurare: https://emailjs.com
+  // emailjs.send('SERVICE_ID', 'TEMPLATE_ID', {
+  //   to_email: 'tua@email.com',
+  //   property: 'Terrazza sul Mare',
+  //   session: sessionId,
+  //   first_message: firstMessage
+  // });
+  console.log('[Notifica] Nuova conversazione iniziata:', firstMessage);
+}
+
+// ─── FIREBASE LOG ──────────────────────────────────────────────────
+function logToFirebase(role, text) {
+  sessionRef.push({
+    role,
+    text,
+    timestamp: new Date().toISOString()
+  });
+
+  if (!sessionStarted) {
+    sessionStarted = true;
+    sessionRef.update({
+      property: 'terrazza_sul_mare',
+      started_at: new Date().toISOString()
+    });
+    sendEmailNotification(text);
+  }
+}
+
+// ─── UI HELPERS ────────────────────────────────────────────────────
+function now() {
+  return new Date().toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+}
+
+function addMessage(role, text) {
+  const conv = document.getElementById('conversation');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = text.replace(/\n/g, '<br>');
+
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = now();
+
+  div.appendChild(bubble);
+  div.appendChild(time);
+  conv.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return div;
+}
+
+function showTyping() {
+  const conv = document.getElementById('conversation');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typing';
+  div.innerHTML = `<div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  conv.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+// ─── SEND MESSAGE ──────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('searchInput');
+  const btn = document.getElementById('sendBtn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  btn.disabled = true;
+
+  addMessage('user', text);
+  chatHistory.push({ role: 'user', content: text });
+  logToFirebase('user', text);
+
+  showTyping();
+
+  try {
+    const res = await fetch('https://trainer-ai-proxy.f-lonatica.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        system: SYSTEM,
+        messages: chatHistory
+      })
+    });
+
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Mi dispiace, non sono riuscito a rispondere. Contatta Fabrizio su WhatsApp.';
+
+    removeTyping();
+    addMessage('bot', reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+    logToFirebase('assistant', reply);
+
+  } catch (err) {
+    removeTyping();
+    const fallback = 'Si è verificato un errore. Per assistenza contatta Fabrizio: <a href="https://wa.me/393490069083" style="color:var(--sea)">WhatsApp</a>';
+    addMessage('bot', fallback);
+  }
+
+  btn.disabled = false;
+  input.focus();
+}
+
+// ─── CHIP CLICK ────────────────────────────────────────────────────
+function askChip(chip) {
+  const map = {
+    '📶 WiFi': 'Qual è la password del WiFi?',
+    '🔑 Check-in / Check-out': 'Quali sono gli orari di check-in e check-out?',
+    '🚗 Parcheggio': 'Dove posso parcheggiare l\'auto?',
+    '🍽️ Ristoranti': 'Quali ristoranti consigliate?',
+    '🗑️ Spazzatura': 'Come funziona la raccolta differenziata?',
+    '🏖️ Spiaggia': 'Dov\'è la spiaggia?',
+    '🆘 Emergenze': 'Quali sono i numeri di emergenza?',
+    '🛒 Supermercato': 'Dov\'è il supermercato?'
+  };
+  const q = map[chip.textContent.trim()] || chip.textContent.trim();
+  document.getElementById('searchInput').value = q;
+  sendMessage();
+}
+
+// ─── ENTER KEY ─────────────────────────────────────────────────────
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+</script>
+
+</body>
+</html>
