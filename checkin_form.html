@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre Check-in</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B4E;--navy2:#1A4A7A;--navy3:#2B6CB0;
+  --gold:#C9973A;--gold2:#F0C060;
+  --white:#fff;--off:#F8FAFD;--bg:#F2F6FC;
+  --text:#0D1F3C;--text2:#4A6080;--text3:#8AA0BC;
+  --border:#D0DCF0;--radius:14px;
+  --shadow:0 4px 24px rgba(13,43,78,.09);
+  --green:#16a34a;--green-light:#dcfce7;
+  --red:#dc2626;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--navy);padding:20px 24px;text-align:center}
+.header-logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff;margin-bottom:4px}
+.header-logo span{color:var(--gold2)}
+.header-sub{font-size:13px;color:rgba(255,255,255,.6)}
+
+/* PROGRESS */
+.progress-wrap{background:var(--white);border-bottom:1px solid var(--border);padding:16px 24px}
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s}
+.progress-steps{display:flex;justify-content:space-between}
+.step-dot{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--text3);font-weight:500}
+.step-dot.active{color:var(--navy)}
+.step-dot.done{color:var(--green)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.step-dot.active .dot{background:var(--gold)}
+.step-dot.done .dot{background:var(--green)}
+
+/* FORM */
+.container{max-width:560px;margin:0 auto;padding:24px 20px 60px}
+.step{display:none}
+.step.active{display:block}
+
+.step-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--navy);margin-bottom:6px}
+.step-sub{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6}
+
+.form-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.form-card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy2);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.form-card-title svg{width:14px;height:14px;stroke:var(--navy2);fill:none;stroke-width:2;stroke-linecap:round}
+
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:5px}
+.label span{color:var(--red)}
+.input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--off);outline:none;transition:border .2s}
+.input:focus{border-color:var(--navy3);background:var(--white)}
+.input.error{border-color:var(--red)}
+select.input{cursor:pointer}
+.error-msg{font-size:11px;color:var(--red);margin-top:4px;display:none}
+.error-msg.show{display:block}
+
+/* OSPITI */
+.guest-counter{display:flex;align-items:center;gap:12px}
+.counter-btn{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--border);background:var(--off);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:300;transition:all .18s;color:var(--navy)}
+.counter-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.counter-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy);width:40px;text-align:center}
+.guest-list{margin-top:14px}
+.guest-item{background:var(--off);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.guest-item-title{font-size:12px;font-weight:600;color:var(--navy2);margin-bottom:8px}
+
+/* FIRMA */
+.firma-wrap{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:var(--white);margin-top:8px}
+canvas#firma{display:block;width:100%;height:160px;cursor:crosshair;touch-action:none}
+.firma-actions{display:flex;justify-content:flex-end;padding:8px 10px;border-top:1px solid var(--border);background:var(--off)}
+.firma-clear{font-size:12px;color:var(--text2);cursor:pointer;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--white);font-family:'DM Sans',sans-serif;transition:all .18s}
+.firma-clear:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.firma-placeholder{text-align:center;font-size:13px;color:var(--text3);padding:20px;pointer-events:none;position:absolute;width:100%}
+
+/* REGOLAMENTO */
+.regolamento{background:var(--off);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--text2);line-height:1.7;max-height:200px;overflow-y:auto;margin-bottom:14px}
+.regolamento strong{color:var(--navy)}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.checkbox-row input[type=checkbox]{width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:var(--navy);flex-shrink:0}
+.checkbox-label{font-size:13px;color:var(--text);line-height:1.5}
+
+/* NAVIGATION */
+.nav-row{display:flex;gap:12px;margin-top:24px}
+.btn-back{flex:0.6;padding:13px;border-radius:12px;border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s}
+.btn-back:hover{background:var(--bg)}
+.btn-next{flex:1;padding:13px;border-radius:12px;border:none;background:var(--navy);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .18s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-next:hover{opacity:.88}
+.btn-next svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round}
+
+/* SUCCESS */
+.success-screen{display:none;text-align:center;padding:40px 20px}
+.success-screen.show{display:block}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy);margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:24px}
+.success-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:20px;text-align:left;margin-bottom:16px}
+.success-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.success-row:last-child{border-bottom:none}
+.success-key{color:var(--text2)}
+.success-val{font-weight:600;color:var(--navy)}
+
+/* ARRIVAL TIME */
+.time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.time-chip{padding:9px 4px;border-radius:9px;border:1.5px solid var(--border);background:var(--off);text-align:center;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s;color:var(--text)}
+.time-chip:hover{border-color:var(--navy);color:var(--navy)}
+.time-chip.selected{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* PHOTO UPLOAD */
+.photo-upload-area{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--off);position:relative}
+.photo-upload-area:hover,.photo-upload-area.drag-over{border-color:var(--navy3);background:#EEF4FF}
+.photo-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-upload-icon{font-size:32px;margin-bottom:8px}
+.photo-upload-label{font-size:13px;color:var(--text2);line-height:1.5}
+.photo-upload-label strong{color:var(--navy)}
+.photo-thumbs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.photo-thumb{position:relative;border-radius:10px;overflow:hidden;border:1.5px solid var(--border);aspect-ratio:4/3;background:var(--off)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb-del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(220,38,38,.85);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.photo-count{font-size:12px;color:var(--text2);margin-top:6px;text-align:center}
+
+/* TOAST */
+/* LANGUAGE SELECTOR */
+.lang-bar{background:rgba(255,255,255,.1);display:flex;justify-content:center;gap:8px;padding:10px 24px}
+.lang-btn{padding:6px 18px;border-radius:20px;border:1.5px solid rgba(255,255,255,.3);background:transparent;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px}
+.lang-btn.active{background:#fff;color:var(--navy);border-color:#fff}
+.lang-btn:hover:not(.active){background:rgba(255,255,255,.15);color:#fff}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;transition:transform .3s;z-index:999;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    (function(){ emailjs.init({ publicKey: 'Z5rD_QgsyqPI-7pNO' }); })();
+  </script>
+  <!-- Firebase: usa REST con auth anonima (stesso token di index.html) -->
+  <script>
+    var FB_URL_CF  = 'https://casa-manager-24414-default-rtdb.europe-west1.firebasedatabase.app';
+    var FB_TOKEN_KEY = 'cm_fb_token';
+    var FIREBASE_WEB_API_KEY = 'AIzaSyC5u2VAYDuPIdOXlSXFMS6ozTOglc7cA-g';
+
+    function getFbToken() {
+      try {
+        var t = JSON.parse(localStorage.getItem(FB_TOKEN_KEY)||'null');
+        if (t && t.token && Date.now() < t.expires) return t.token;
+      } catch(e) {}
+      return null;
+    }
+    function saveFbToken(token, expiresIn) {
+      localStorage.setItem(FB_TOKEN_KEY, JSON.stringify({
+        token: token,
+        expires: Date.now() + (parseInt(expiresIn||3600) - 60) * 1000
+      }));
+    }
+    function signInAnonymous(cb) {
+      var existing = getFbToken();
+      if (existing) { if(cb) cb(existing); return; }
+      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + FIREBASE_WEB_API_KEY, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({returnSecureToken: true})
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.idToken) { saveFbToken(d.idToken, d.expiresIn); if(cb) cb(d.idToken); }
+        else { console.warn('Firebase Auth error:', d); if(cb) cb(null); }
+      })
+      .catch(function(e){ console.warn('Firebase Auth error:', e); if(cb) cb(null); });
+    }
+
+    function saveCheckinToFirebase(data) {
+      var token = getFbToken();
+      if (!token) {
+        // Prova ad autenticarsi e poi riprova
+        signInAnonymous(function(t) { if(t) saveCheckinToFirebase(data); });
+        return;
+      }
+      var dataToSave = Object.assign({}, data);
+      delete dataToSave.firma;
+      var url = FB_URL_CF + '/checkins/' + data.id + '.json?auth=' + token;
+      fetch(url, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(dataToSave)
+      })
+      .then(function(){ console.log('Checkin saved to Firebase'); })
+      .catch(function(e){ console.error('Firebase save error:', e); });
+    }
+
+    // Avvia auth anonima subito al caricamento della pagina
+    signInAnonymous(function(){});
+  </script>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">Casa<span>Manager</span></div>
+  <div class="header-sub" id="headerSub">Modulo di Pre Check-in</div>
+</div>
+<div class="lang-bar">
+  <button class="lang-btn active" id="btnIt" onclick="setLang('it')">🇮🇹 Italiano</button>
+  <button class="lang-btn" id="btnEn" onclick="setLang('en')">🇬🇧 English</button>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:25%"></div></div>
+  <div class="progress-steps">
+    <div class="step-dot active" id="sdot1"><div class="dot"></div>Ospite</div>
+    <div class="step-dot" id="sdot2"><div class="dot"></div>Gruppo</div>
+    <div class="step-dot" id="sdot3"><div class="dot"></div>Arrivo</div>
+    <div class="step-dot" id="sdot4"><div class="dot"></div>Firma</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- STEP 1: DATI ANAGRAFICI -->
+  <div class="step active" id="step1">
+    <div class="step-title" id="s1title">Dati anagrafici</div>
+    <div class="step-sub" id="s1sub">Inserisci i dati del titolare della prenotazione</div>
+    <div class="form-card">
+      <div class="form-card-title">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Informazioni personali
+      </div>
+      <div class="field field-row">
+        <div>
+          <div class="label">Nome <span>*</span></div>
+          <input class="input" id="f-nome" type="text" placeholder="Mario">
+          <div class="error-msg" id="err-nome">Campo obbligatorio</div>
+        </div>
+        <div>
+          <div class="label">Cognome <span>*</span></div>
+          <input class="input" id="f-cognome" type="text" placeholder="Rossi">
+          <div class="error-msg" id="err-cognome">Campo obbligatorio</div>
+        </div>
+      </div>
+      <div class="field field-row">
+        <div>
+          <div class="label">Nazionalità <span>*</span></div>
+          <select class="input" id="f-nazionalita">
+            <option value="">Seleziona...</option>
+            <option value="Italiana" selected>Italiana</option>
+            <option value="Americana">Americana</option>
+            <option value="Britannica">Britannica</option>
+            <option value="Francese">Francese</option>
+            <option value="Tedesca">Tedesca</option>
+            <option value="Spagnola">Spagnola</option>
+            <option value="Olandese">Olandese</option>
+            <option value="Belga">Belga</option>
+            <option value="Svizzera">Svizzera</option>
+            <option value="Austriaca">Austriaca</option>
+            <option value="Australiana">Australiana</option>
+            <option value="Canadese">Canadese</option>
+            <option value="Altra">Altra</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">Telefono</div>
+          <input class="input" id="f-telefono" type="tel" placeholder="+39 333...">
+        </div>
+      </div>
+      <div class="field">
+        <div class="label">Email</div>
+        <input class="input" id="f-email" type="email" placeholder="mario.rossi@email.com">
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-next" onclick="nextStep(1)">
+        Continua <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2: GRUPPO + FOTO DOCUMENTI -->
+  <div class="step" id="step2">
+    <div class="step-title" id="s2title">Gruppo e documenti</div>
+    <div class="step-sub" id="s2sub">Quante persone soggiorneranno e foto dei documenti</div>
+    <div class="form-card">
+      <div class="form-card-title">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Numero ospiti
+      </div>
+      <div class="field">
+        <div class="label" id="f-adulti-label">Adulti (18+) <span>*</span></div>
+        <div class="guest-counter">
+          <button class="counter-btn" onclick="changeCount('adulti',-1)">−</button>
+          <div class="counter-val" id="count-adulti">1</div>
+          <button class="counter-btn" onclick="changeCount('adulti',1)">+</button>
+          <span class="counter-suffix" style="font-size:13px;color:var(--text2)">persone</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="label" id="f-bambini-label">Bambini (0-17)</div>
+        <div class="guest-counter">
+          <button class="counter-btn" onclick="changeCount('bambini',-1)">−</button>
+          <div class="counter-val" id="count-bambini">0</div>
+          <button class="counter-btn" onclick="changeCount('bambini',1)">+</button>
+          <span style="font-size:13px;color:var(--text2)">persone</span>
+        </div>
+      </div>
+      <div class="field" id="bambiniAgeWrap" style="display:none">
+        <div class="label">Età bambini</div>
+        <input class="input" id="f-bambini-eta" type="text" placeholder="es. 5, 8 anni">
+      </div>
+      <div class="field">
+        <div class="label" id="f-note-gruppo-label">Note particolari</div>
+        <input class="input" id="f-note-gruppo" type="text" placeholder="es. allergie, esigenze speciali...">
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span id="s2docTitle">Foto documenti di tutti gli ospiti</span>
+      </div>
+      <p id="s2docSub" style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">
+        Scatta una foto o carica l'immagine del documento di identità di <strong>ogni ospite</strong> (fronte e retro se necessario).
+      </p>
+      <div class="photo-upload-area" id="photoDropArea">
+        <input type="file" id="docPhotoInput" accept="image/*" multiple onchange="handlePhotoUpload(this.files)">
+        <div class="photo-upload-icon">📷</div>
+        <div class="photo-upload-label"><strong id="photoUploadMain">Tocca per scattare o scegli foto</strong><br><span id="photoUploadSub">Puoi selezionare più file contemporaneamente</span></div>
+      </div>
+      <div id="photoThumbsWrap" class="photo-thumbs" style="display:none"></div>
+      <div class="photo-count" id="photoCount"></div>
+      <div class="error-msg" id="err-doc-photo">Carica almeno la foto di un documento</div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back btn-indietro" onclick="prevStep(2)">← Indietro</button>
+      <button class="btn-next btn-continua" onclick="nextStep(2)">
+        Continua <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 3: ORA ARRIVO -->
+  <div class="step" id="step3">
+    <div class="step-title" id="s3title">Orario di arrivo</div>
+    <div class="step-sub" id="s3sub">Indicaci quando pensi di arrivare così siamo pronti ad accoglierti</div>
+    <div class="form-card">
+      <div class="form-card-title">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Ora di arrivo prevista
+      </div>
+      <div class="time-grid">
+        <div class="time-chip" onclick="selectTime('14:00')">14:00</div>
+        <div class="time-chip" onclick="selectTime('15:00')">15:00</div>
+        <div class="time-chip" onclick="selectTime('16:00')">16:00</div>
+        <div class="time-chip" onclick="selectTime('17:00')">17:00</div>
+        <div class="time-chip" onclick="selectTime('18:00')">18:00</div>
+        <div class="time-chip" onclick="selectTime('19:00')">19:00</div>
+        <div class="time-chip" onclick="selectTime('20:00')">20:00</div>
+        <div class="time-chip" onclick="selectTime('21:00+')">21:00+</div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <div class="label">Oppure inserisci orario preciso</div>
+        <input class="input" id="f-arrivo-ora" type="time" placeholder="15:00">
+      </div>
+      <div class="error-msg" id="err-arrivo" style="margin-top:4px">Seleziona un orario di arrivo</div>
+      <div class="field" style="margin-top:10px">
+        <div class="label">Come arriverai?</div>
+        <select class="input" id="f-mezzo">
+          <option value="">Seleziona...</option>
+          <option value="Auto propria">Auto propria</option>
+          <option value="Aereo + transfer">Aereo + transfer</option>
+          <option value="Treno">Treno</option>
+          <option value="Altro">Altro</option>
+        </select>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back btn-indietro" onclick="prevStep(3)">← Indietro</button>
+      <button class="btn-next btn-continua" onclick="nextStep(3)">
+        Continua <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 4: FIRMA E REGOLAMENTO -->
+  <div class="step" id="step4">
+    <div class="step-title" id="s4title">Regolamento e firma</div>
+    <div class="step-sub" id="s4sub">Leggi il regolamento e firma digitalmente per confermare la tua prenotazione</div>
+    <div class="form-card">
+      <div class="form-card-title">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Regolamento della struttura
+      </div>
+      <div class="regolamento" id="regolamento-text">
+        <strong>1. Check-in e Check-out</strong><br>
+        Il check-in è previsto dalle ore 15:00. Il check-out deve avvenire entro le ore 10:00. Per orari diversi è necessario concordare in anticipo con l'host.<br><br>
+        <strong>2. No fumo</strong><br>
+        È vietato fumare all'interno della struttura. È consentito fumare in terrazza e in giardino.<br><br>
+        <strong>3. Animali domestici</strong><br>
+        Gli animali domestici sono ammessi previa autorizzazione dell'host.<br><br>
+        <strong>4. Feste e riunioni</strong><br>
+        Non sono consentite feste o grandi riunioni senza previa autorizzazione.<br><br>
+        <strong>5. Sabbia nelle docce</strong><br>
+        Si prega di pulire i piedi prima di entrare in doccia. Sono disponibili punti acqua in terrazza.<br><br>
+        <strong>6. Rispetto della proprietà</strong><br>
+        Si prega di trattare la struttura con la stessa cura che si riserverebbe alla propria abitazione.<br><br>
+        <strong>7. Privacy</strong><br>
+        I dati forniti saranno utilizzati esclusivamente per gli adempimenti di legge previsti dal D.Lgs. 196/2003 e GDPR.
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="cb-regolamento">
+        <label class="checkbox-label" for="cb-regolamento"><span id="cb-reg-label">Ho letto e accetto il regolamento della struttura</span> <span style="color:var(--red)">*</span></label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="cb-privacy">
+        <label class="checkbox-label" for="cb-privacy"><span id="cb-priv-label">Acconsento al trattamento dei dati personali ai sensi del GDPR</span> <span style="color:var(--red)">*</span></label>
+      </div>
+      <div class="error-msg" id="err-checkbox">Devi accettare il regolamento e la privacy</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+        <span id="firmaSection">Firma digitale</span>
+      </div>
+      <p id="firmaSub" style="font-size:13px;color:var(--text2);margin-bottom:8px">Firma nello spazio qui sotto con il dito o il mouse</p>
+      <div class="firma-wrap" style="position:relative">
+        <div class="firma-placeholder" id="firmaPlaceholder">Firma qui ✍️</div>
+        <canvas id="firma" width="520" height="160"></canvas>
+        <div class="firma-actions">
+          <button class="firma-clear" id="firma-clear-btn" onclick="clearFirma()">✕ Cancella firma</button>
+        </div>
+      </div>
+      <div class="error-msg" id="err-firma">La firma è obbligatoria</div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-back btn-indietro" onclick="prevStep(4)">← Indietro</button>
+      <button class="btn-next" onclick="submitForm()" style="background:var(--green)">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="btn-invia-text">Invia pre check-in</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Pre check-in completato!</div>
+    <div class="success-sub">Grazie! Abbiamo ricevuto i tuoi dati.<br>Ti aspettiamo per il check-in dalle <strong>15:00</strong>.<br>Per qualsiasi necessità contatta il tuo host.</div>
+    <div class="success-card" id="successSummary"></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:16px;line-height:1.6">
+      Puoi chiudere questa pagina.<br>I tuoi dati sono stati salvati in modo sicuro.
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── TRANSLATIONS ──
+var LANG = 'it';
+var T = {
+  it: {
+    headerSub: 'Modulo di Pre Check-in',
+    // Progress steps
+    step1Label:'Ospite', step2Label:'Gruppo', step3Label:'Arrivo', step4Label:'Firma',
+    // Step 1
+    s1title:'Dati anagrafici', s1sub:'Inserisci i dati del titolare della prenotazione',
+    s1section:'Informazioni personali',
+    lNome:'Nome', lCognome:'Cognome',
+    lNazionalita:'Nazionalità', lTelefono:'Telefono', lEmail:'Email',
+    phNome:'Mario', phCognome:'Rossi', phTelefono:'+39 333...',
+    // Step 2
+    s2title:'Gruppo e documenti', s2sub:'Quante persone soggiorneranno e foto dei documenti',
+    s2section:'Numero ospiti',
+    lAdulti:'Adulti (18+)', lBambini:'Bambini (0-17)', lBambiniEta:'Età bambini',
+    lNoteGruppo:'Note particolari',
+    phBambiniEta:'es. 5, 8 anni', phNoteGruppo:'es. allergie, esigenze speciali...',
+    persone:'persone',
+    s2docTitle:'Foto documenti di tutti gli ospiti',
+    s2docSub:'Scatta una foto o carica l\'immagine del documento di identità di <strong>ogni ospite</strong> (fronte e retro se necessario).',
+    photoUploadMain:'Tocca per scattare o scegli foto',
+    photoUploadSub:'Puoi selezionare più file contemporaneamente',
+    errDocPhoto:'Carica almeno la foto di un documento',
+    // Step 3
+    s3title:'Orario di arrivo', s3sub:'Indicaci quando pensi di arrivare così siamo pronti ad accoglierti',
+    s3section:'Ora di arrivo prevista',
+    lOraArrivo:'Oppure inserisci orario preciso', lMezzo:'Come arriverai?',
+    mezzoOpts:['Seleziona...','Auto propria','Aereo + transfer','Treno','Altro'],
+    // Step 4
+    s4title:'Regolamento e firma', s4sub:'Leggi il regolamento e firma digitalmente per confermare la tua prenotazione',
+    s4section:'Regolamento della struttura',
+    firmaSection:'Firma digitale',
+    firmaSub:'Firma nello spazio qui sotto con il dito o il mouse',
+    firmaClear:'✕ Cancella firma',
+    cbRegolamento:'Ho letto e accetto il regolamento della struttura',
+    cbPrivacy:'Acconsento al trattamento dei dati personali ai sensi del GDPR',
+    // Nav
+    btnContinua:'Continua', btnIndietro:'← Indietro', btnInvia:'Invia pre check-in',
+    // Errors
+    errReq:'Campo obbligatorio',
+    errArrivo:'Seleziona un orario di arrivo', errCheckbox:'Devi accettare il regolamento e la privacy',
+    errFirma:'La firma è obbligatoria',
+    // Success
+    successTitle:'Pre check-in completato!',
+    successSub:'Grazie {nome}! Abbiamo ricevuto tutti i tuoi dati.<br>Ti aspettiamo per il check-in alle <strong>{ora}</strong>.',
+    successClose:'Puoi chiudere questa pagina.',
+    // Nazionalita options
+    nazOpts:['Seleziona...','Italiana','Americana','Britannica','Francese','Tedesca','Spagnola','Olandese','Belga','Svizzera','Austriaca','Australiana','Canadese','Altra'],
+    // Regolamento
+    regolamento: `<strong>1. Check-in e Check-out</strong><br>Il check-in è previsto dalle ore 15:00. Il check-out deve avvenire entro le ore 10:00. Per orari diversi è necessario concordare in anticipo con l'host.<br><br><strong>2. No fumo</strong><br>È vietato fumare all'interno della struttura. È consentito fumare in terrazza e in giardino.<br><br><strong>3. Animali domestici</strong><br>Gli animali domestici sono ammessi previa autorizzazione dell'host.<br><br><strong>4. Feste e riunioni</strong><br>Non sono consentite feste o grandi riunioni senza previa autorizzazione.<br><br><strong>5. Sabbia nelle docce</strong><br>Si prega di pulire i piedi prima di entrare in doccia.<br><br><strong>6. Rispetto della proprietà</strong><br>Si prega di trattare la struttura con la stessa cura che si riserverebbe alla propria abitazione.<br><br><strong>7. Privacy</strong><br>I dati forniti saranno utilizzati esclusivamente per gli adempimenti di legge previsti dal GDPR.`,
+  },
+  en: {
+    headerSub: 'Pre Check-in Form',
+    step1Label:'Guest', step2Label:'Group', step3Label:'Arrival', step4Label:'Sign',
+    s1title:'Personal details', s1sub:'Please fill in the details of the booking holder',
+    s1section:'Personal information',
+    lNome:'First name', lCognome:'Last name',
+    lNazionalita:'Nationality', lTelefono:'Phone', lEmail:'Email',
+    phNome:'John', phCognome:'Smith', phTelefono:'+44 7...',
+    s2title:'Group & documents', s2sub:'How many guests and document photos',
+    s2section:'Number of guests',
+    lAdulti:'Adults (18+)', lBambini:'Children (0-17)', lBambiniEta:'Children ages',
+    lNoteGruppo:'Special notes',
+    phBambiniEta:'e.g. 5, 8 years', phNoteGruppo:'e.g. allergies, special needs...',
+    persone:'people',
+    s2docTitle:'Document photos for all guests',
+    s2docSub:'Take a photo or upload an image of the identity document of <strong>each guest</strong> (front and back if needed).',
+    photoUploadMain:'Tap to take or choose photos',
+    photoUploadSub:'You can select multiple files at once',
+    errDocPhoto:'Please upload at least one document photo',
+    s3title:'Arrival time', s3sub:"Let us know when you plan to arrive so we're ready to welcome you",
+    s3section:'Expected arrival time',
+    lOraArrivo:'Or enter exact time', lMezzo:'How will you travel?',
+    mezzoOpts:['Select...','Own car','Flight + transfer','Train','Other'],
+    s4title:'House rules & signature', s4sub:'Please read the house rules and sign digitally to confirm your booking',
+    s4section:'House rules',
+    firmaSection:'Digital signature',
+    firmaSub:'Sign in the space below with your finger or mouse',
+    firmaClear:'✕ Clear signature',
+    cbRegolamento:'I have read and accept the house rules',
+    cbPrivacy:'I consent to the processing of my personal data under GDPR',
+    btnContinua:'Continue', btnIndietro:'← Back', btnInvia:'Submit pre check-in',
+    errReq:'Required field',
+    errArrivo:'Please select an arrival time', errCheckbox:'You must accept the house rules and privacy policy',
+    errFirma:'Signature is required',
+    successTitle:'Pre check-in complete!',
+    successSub:'Thank you {nome}! We have received all your details.<br>We look forward to welcoming you at <strong>{ora}</strong>.',
+    successClose:'You can close this page.',
+    nazOpts:['Select...','Italian','American','British','French','German','Spanish','Dutch','Belgian','Swiss','Austrian','Australian','Canadian','Other'],
+    regolamento: `<strong>1. Check-in & Check-out</strong><br>Check-in is from 3:00 PM. Check-out must be completed by 10:00 AM. For different times please arrange in advance with the host.<br><br><strong>2. No smoking</strong><br>Smoking is not permitted inside. It is allowed on the terrace and in the garden.<br><br><strong>3. Pets</strong><br>Pets are welcome with prior authorisation from the host.<br><br><strong>4. Parties & gatherings</strong><br>Parties and large gatherings are not permitted without prior approval.<br><br><strong>5. Sand in showers</strong><br>Please rinse your feet before entering the shower. Water points are available on the terrace.<br><br><strong>6. Respect the property</strong><br>Please treat the property with the same care you would your own home.<br><br><strong>7. Privacy</strong><br>Your data will be used solely for legal obligations under GDPR.`,
+  }
+};
+
+function setLang(lang) {
+  LANG = lang;
+  document.getElementById('btnIt').className = 'lang-btn' + (lang==='it' ? ' active' : '');
+  document.getElementById('btnEn').className = 'lang-btn' + (lang==='en' ? ' active' : '');
+  applyTranslations();
+}
+
+function t(key) { return T[LANG][key] || T['it'][key] || key; }
+
+function applyTranslations() {
+  var l = T[LANG];
+  // Header
+  document.getElementById('headerSub').textContent = t('headerSub');
+  // Progress step labels
+  ['1','2','3','4'].forEach(function(n){
+    var el = document.getElementById('sdot'+n);
+    if (el) el.childNodes[1].textContent = t('step'+n+'Label');
+  });
+  // Step titles & subs
+  setText('s1title', t('s1title')); setText('s1sub', t('s1sub'));
+  setText('s2title', t('s2title')); setText('s2sub', t('s2sub'));
+  setText('s3title', t('s3title')); setText('s3sub', t('s3sub'));
+  setText('s4title', t('s4title')); setText('s4sub', t('s4sub'));
+  // Labels
+  setLabel('f-nome', t('lNome')); setPlaceholder('f-nome', t('phNome'));
+  setLabel('f-cognome', t('lCognome')); setPlaceholder('f-cognome', t('phCognome'));
+  setLabel('f-nazionalita', t('lNazionalita'));
+  setLabel('f-telefono', t('lTelefono')); setPlaceholder('f-telefono', t('phTelefono'));
+  setLabel('f-email', t('lEmail'));
+  setLabel('f-adulti-label', t('lAdulti'));
+  setLabel('f-bambini-label', t('lBambini'));
+  setLabel('f-bambini-eta', t('lBambiniEta')); setPlaceholder('f-bambini-eta', t('phBambiniEta'));
+  setLabel('f-note-gruppo-label', t('lNoteGruppo')); setPlaceholder('f-note-gruppo', t('phNoteGruppo'));
+  setLabel('f-arrivo-ora', t('lOraArrivo'));
+  setLabel('f-mezzo', t('lMezzo'));
+  // Photo upload labels
+  setText('s2docTitle', t('s2docTitle'));
+  var s2docSubEl = document.getElementById('s2docSub'); if(s2docSubEl) s2docSubEl.innerHTML = t('s2docSub');
+  setText('photoUploadMain', t('photoUploadMain'));
+  setText('photoUploadSub', t('photoUploadSub'));
+  setText('err-doc-photo', t('errDocPhoto'));
+  // Counters suffix
+  document.querySelectorAll('.counter-suffix').forEach(function(el){ el.textContent = t('persone'); });
+  // Select options
+  setSelectOptions('f-nazionalita', l.nazOpts);
+  setSelectOptions('f-mezzo', l.mezzoOpts);
+  // Firma
+  setText('firmaSection', t('firmaSection'));
+  setText('firmaSub', t('firmaSub'));
+  setText('firma-clear-btn', t('firmaClear'));
+  // Checkboxes
+  setText('cb-reg-label', t('cbRegolamento'));
+  setText('cb-priv-label', t('cbPrivacy'));
+  // Regolamento text
+  var regEl = document.getElementById('regolamento-text');
+  if (regEl) regEl.innerHTML = l.regolamento;
+  // Buttons
+  document.querySelectorAll('.btn-continua').forEach(function(b){ b.childNodes[0].textContent = t('btnContinua')+' '; });
+  document.querySelectorAll('.btn-indietro').forEach(function(b){ b.textContent = t('btnIndietro'); });
+  setText('btn-invia-text', t('btnInvia'));
+  // Error messages
+  setText('err-nome', t('errReq')); setText('err-cognome', t('errReq'));
+  setText('err-arrivo', t('errArrivo'));
+  setText('err-checkbox', t('errCheckbox')); setText('err-firma', t('errFirma'));
+}
+
+function setText(id, val) { var el=document.getElementById(id); if(el) el.textContent = val; }
+function setPlaceholder(id, val) { var el=document.getElementById(id); if(el) el.placeholder = val; }
+function setLabel(fieldId, val) {
+  var el = document.getElementById(fieldId);
+  if (!el) return;
+  var label = el.previousElementSibling;
+  if (label && label.classList.contains('label')) {
+    var star = label.querySelector('span');
+    label.textContent = val + ' ';
+    if (star) label.appendChild(star);
+  }
+}
+function setSelectOptions(id, opts) {
+  var sel = document.getElementById(id);
+  if (!sel || !opts) return;
+  var val = sel.value;
+  sel.innerHTML = opts.map(function(o,i){ return '<option value="'+(i===0?'':o)+'">'+o+'</option>'; }).join('');
+  sel.value = val;
+}
+
+var currentStep = 1;
+var totalSteps = 4;
+var firmaCanvas, firmaCtx, isDrawing = false, hasFirma = false;
+var adulti = 1, bambini = 0;
+var selectedArrivo = '';
+var docPhotos = []; // array of {name, dataUrl}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', function() {
+  // Get property name from URL param
+  var params = new URLSearchParams(window.location.search);
+  var propName = params.get('casa') || '';
+  if (propName) {
+    document.getElementById('headerSub').textContent = 'Pre Check-in — ' + decodeURIComponent(propName);
+    document.title = 'Pre Check-in — ' + decodeURIComponent(propName);
+  }
+
+  initFirma();
+  document.getElementById('count-adulti').textContent = adulti;
+  applyTranslations();
+  document.getElementById('count-bambini').textContent = bambini;
+});
+
+// ── STEP NAVIGATION ──
+function updateProgress(step) {
+  var pct = (step / totalSteps) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  for (var i = 1; i <= totalSteps; i++) {
+    var dot = document.getElementById('sdot' + i);
+    dot.className = 'step-dot' + (i < step ? ' done' : i === step ? ' active' : '');
+  }
+}
+
+function showStep(step) {
+  document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById('step' + step);
+  if (el) { el.classList.add('active'); updateProgress(step); window.scrollTo(0,0); }
+}
+
+function nextStep(from) {
+  if (!validateStep(from)) return;
+  currentStep = from + 1;
+  showStep(currentStep);
+}
+
+function prevStep(from) {
+  currentStep = from - 1;
+  showStep(currentStep);
+}
+
+// ── VALIDATION ──
+function validateStep(step) {
+  var ok = true;
+  function check(id, errId) {
+    var el = document.getElementById(id);
+    var err = document.getElementById(errId);
+    var val = el ? el.value.trim() : '';
+    if (!val) {
+      if (el) el.classList.add('error');
+      if (err) err.classList.add('show');
+      ok = false;
+    } else {
+      if (el) el.classList.remove('error');
+      if (err) err.classList.remove('show');
+    }
+  }
+  if (step === 1) {
+    check('f-nome','err-nome');
+    check('f-cognome','err-cognome');
+    if (!document.getElementById('f-nazionalita').value) {
+      document.getElementById('f-nazionalita').classList.add('error'); ok = false;
+    } else {
+      document.getElementById('f-nazionalita').classList.remove('error');
+    }
+  }
+  if (step === 2) {
+    // Validate at least one doc photo
+    if (docPhotos.length === 0) {
+      document.getElementById('err-doc-photo').classList.add('show'); ok = false;
+    } else {
+      document.getElementById('err-doc-photo').classList.remove('show');
+    }
+  }
+  if (step === 3) {
+    var ora = document.getElementById('f-arrivo-ora').value || selectedArrivo;
+    if (!ora) {
+      document.getElementById('err-arrivo').classList.add('show'); ok = false;
+    } else {
+      document.getElementById('err-arrivo').classList.remove('show');
+    }
+  }
+  return ok;
+}
+
+// ── PHOTO UPLOAD ──
+function compressImage(file, cb) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var MAX_W = 600, MAX_H = 600, QUALITY = 0.3;
+      var w = img.width, h = img.height;
+      if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+      if (h > MAX_H) { w = Math.round(w * MAX_H / h); h = MAX_H; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      cb({ name: file.name, dataUrl: canvas.toDataURL('image/jpeg', QUALITY) });
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handlePhotoUpload(files) {
+  if (!files || !files.length) return;
+  var total = Array.from(files).filter(function(f){ return f.type.startsWith('image/'); }).length;
+  var done = 0;
+  Array.from(files).forEach(function(file) {
+    if (!file.type.startsWith('image/')) return;
+    compressImage(file, function(compressed) {
+      docPhotos.push(compressed);
+      done++;
+      if (done === total) renderPhotoThumbs();
+    });
+  });
+  document.getElementById('docPhotoInput').value = '';
+}
+
+function renderPhotoThumbs() {
+  var wrap = document.getElementById('photoThumbsWrap');
+  var countEl = document.getElementById('photoCount');
+  if (docPhotos.length === 0) {
+    wrap.style.display = 'none';
+    countEl.textContent = '';
+    return;
+  }
+  wrap.style.display = 'grid';
+  wrap.innerHTML = docPhotos.map(function(p, i) {
+    return '<div class="photo-thumb">' +
+      '<img src="' + p.dataUrl + '" alt="Doc ' + (i+1) + '">' +
+      '<button class="photo-thumb-del" onclick="removePhoto(' + i + ')" title="Rimuovi">×</button>' +
+    '</div>';
+  }).join('');
+  countEl.textContent = docPhotos.length + ' foto caricata' + (docPhotos.length !== 1 ? '/e' : '');
+  document.getElementById('err-doc-photo').classList.remove('show');
+}
+
+function removePhoto(idx) {
+  docPhotos.splice(idx, 1);
+  renderPhotoThumbs();
+}
+
+// ── FIRMA ──
+function initFirma() {
+  firmaCanvas = document.getElementById('firma');
+  firmaCtx = firmaCanvas.getContext('2d');
+  // Resize canvas to match display size
+  var rect = firmaCanvas.getBoundingClientRect();
+  firmaCanvas.width = firmaCanvas.offsetWidth || 520;
+  firmaCanvas.height = 160;
+  firmaCtx.strokeStyle = '#0D2B4E';
+  firmaCtx.lineWidth = 2.5;
+  firmaCtx.lineCap = 'round';
+  firmaCtx.lineJoin = 'round';
+
+  function getPos(e) {
+    var r = firmaCanvas.getBoundingClientRect();
+    var scaleX = firmaCanvas.width / r.width;
+    var scaleY = firmaCanvas.height / r.height;
+    var src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+  }
+  firmaCanvas.addEventListener('mousedown', function(e){ isDrawing=true; var p=getPos(e); firmaCtx.beginPath(); firmaCtx.moveTo(p.x,p.y); document.getElementById('firmaPlaceholder').style.display='none'; });
+  firmaCanvas.addEventListener('mousemove', function(e){ if(!isDrawing)return; var p=getPos(e); firmaCtx.lineTo(p.x,p.y); firmaCtx.stroke(); hasFirma=true; });
+  firmaCanvas.addEventListener('mouseup', function(){ isDrawing=false; });
+  firmaCanvas.addEventListener('touchstart', function(e){ e.preventDefault(); isDrawing=true; var p=getPos(e); firmaCtx.beginPath(); firmaCtx.moveTo(p.x,p.y); document.getElementById('firmaPlaceholder').style.display='none'; }, {passive:false});
+  firmaCanvas.addEventListener('touchmove', function(e){ e.preventDefault(); if(!isDrawing)return; var p=getPos(e); firmaCtx.lineTo(p.x,p.y); firmaCtx.stroke(); hasFirma=true; }, {passive:false});
+  firmaCanvas.addEventListener('touchend', function(){ isDrawing=false; });
+}
+
+function clearFirma() {
+  firmaCtx.clearRect(0,0,firmaCanvas.width,firmaCanvas.height);
+  hasFirma = false;
+  document.getElementById('firmaPlaceholder').style.display='block';
+}
+
+// ── COUNTERS ──
+function changeCount(type, delta) {
+  if (type === 'adulti') {
+    adulti = Math.max(1, adulti + delta);
+    document.getElementById('count-adulti').textContent = adulti;
+  } else {
+    bambini = Math.max(0, bambini + delta);
+    document.getElementById('count-bambini').textContent = bambini;
+    document.getElementById('bambiniAgeWrap').style.display = bambini > 0 ? 'block' : 'none';
+  }
+}
+
+// ── TIME CHIPS ──
+function selectTime(t) {
+  selectedArrivo = t;
+  document.querySelectorAll('.time-chip').forEach(function(c){ c.classList.remove('selected'); });
+  event.target.classList.add('selected');
+  document.getElementById('f-arrivo-ora').value = t.replace('+','');
+  document.getElementById('err-arrivo').classList.remove('show');
+}
+
+// ── SUBMIT ──
+function submitForm() {
+  // Validate checkboxes
+  var cbReg = document.getElementById('cb-regolamento').checked;
+  var cbPriv = document.getElementById('cb-privacy').checked;
+  if (!cbReg || !cbPriv) {
+    document.getElementById('err-checkbox').classList.add('show');
+    return;
+  }
+  document.getElementById('err-checkbox').classList.remove('show');
+
+  // Validate firma
+  if (!hasFirma) {
+    document.getElementById('err-firma').classList.add('show');
+    return;
+  }
+  document.getElementById('err-firma').classList.remove('show');
+
+  // Collect all data
+  var data = {
+    id: Date.now(),
+    timestamp: new Date().toISOString(),
+    casa: decodeURIComponent(new URLSearchParams(window.location.search).get('casa') || ''),
+    nome: document.getElementById('f-nome').value.trim(),
+    cognome: document.getElementById('f-cognome').value.trim(),
+    nazionalita: document.getElementById('f-nazionalita').value,
+    telefono: document.getElementById('f-telefono').value.trim(),
+    email: document.getElementById('f-email').value.trim(),
+    adulti: adulti,
+    bambini: bambini,
+    bambiniEta: document.getElementById('f-bambini-eta').value.trim(),
+    docPhotosCount: docPhotos.length,
+    noteGruppo: document.getElementById('f-note-gruppo').value.trim(),
+    arrivoOra: document.getElementById('f-arrivo-ora').value || selectedArrivo,
+    mezzo: document.getElementById('f-mezzo').value,
+    firma: firmaCanvas.toDataURL('image/png'),
+    accettazioneRegolamento: true,
+    accettazionePrivacy: true
+  };
+
+  // Disable button and show loading
+  var btnInvia = document.querySelector('[onclick="submitForm()"]');
+  if (btnInvia) { btnInvia.disabled = true; btnInvia.style.opacity = '0.6'; }
+
+  // Save to Firebase
+  saveCheckinToFirebase(data);
+
+  // Also save to localStorage as backup
+  var checkins = JSON.parse(localStorage.getItem('checkin_forms') || '[]');
+  checkins.unshift(data);
+  localStorage.setItem('checkin_forms', JSON.stringify(checkins));
+
+  // ── BUILD DATI EMAIL (senza foto) ──
+  var bodyDati =
+    '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">' +
+    '<h2 style="background:#0D2B4E;color:#fff;padding:16px 20px;border-radius:8px 8px 0 0;margin:0">🏡 Pre Check-in — ' + data.casa + '</h2>' +
+    '<div style="background:#f8fafd;padding:20px;border:1px solid #d0dcf0;border-top:none;border-radius:0 0 8px 8px">' +
+    '<table style="width:100%;border-collapse:collapse;font-size:14px">' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Struttura</td><td style="padding:7px 10px;font-weight:600;border-bottom:1px solid #e8eef8">' + data.casa + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Nome</td><td style="padding:7px 10px;font-weight:600;border-bottom:1px solid #e8eef8">' + data.nome + ' ' + data.cognome + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Nazionalità</td><td style="padding:7px 10px;border-bottom:1px solid #e8eef8">' + data.nazionalita + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Telefono</td><td style="padding:7px 10px;border-bottom:1px solid #e8eef8">' + (data.telefono||'—') + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Email</td><td style="padding:7px 10px;border-bottom:1px solid #e8eef8">' + (data.email||'—') + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Adulti</td><td style="padding:7px 10px;border-bottom:1px solid #e8eef8">' + data.adulti + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Bambini</td><td style="padding:7px 10px;border-bottom:1px solid #e8eef8">' + (data.bambini||0) + (data.bambiniEta ? ' ('+data.bambiniEta+')' : '') + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Arrivo previsto</td><td style="padding:7px 10px;font-weight:600;color:#c9973a;border-bottom:1px solid #e8eef8">' + data.arrivoOra + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080;border-bottom:1px solid #e8eef8">Mezzo</td><td style="padding:7px 10px;border-bottom:1px solid #e8eef8">' + (data.mezzo||'—') + '</td></tr>' +
+    '<tr><td style="padding:7px 10px;color:#4a6080">Note</td><td style="padding:7px 10px">' + (data.noteGruppo||'—') + '</td></tr>' +
+    '</table>' +
+    '<p style="margin-top:16px;font-size:13px;color:#4a6080">📷 Foto documenti: <strong>' + data.docPhotosCount + '</strong> — seguono in email separate.</p>' +
+    '<p style="margin-top:8px;font-size:12px;color:#8aa0bc">Inviato il ' + new Date().toLocaleString('it-IT') + ' — ID: ' + data.id + '</p>' +
+    '</div></div>';
+
+  // ── SEND EMAIL 1: DATI ──
+  emailjs.send('service_1wgvohb', 'template_kdcpf8r', {
+    casa: data.casa,
+    nome: data.nome,
+    cognome: data.cognome,
+    message: bodyDati
+  })
+  .then(function() {
+    console.log('Email dati inviata');
+    // ── SEND EMAIL 2+: una per ogni foto ──
+    docPhotos.forEach(function(p, i) {
+      var fotoHtml =
+        '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">' +
+        '<h2 style="background:#0D2B4E;color:#fff;padding:16px 20px;border-radius:8px 8px 0 0;margin:0">📷 Documento ' + (i+1) + '/' + docPhotos.length + ' — ' + data.nome + ' ' + data.cognome + '</h2>' +
+        '<div style="background:#f8fafd;padding:20px;border:1px solid #d0dcf0;border-top:none;border-radius:0 0 8px 8px">' +
+        '<p style="font-size:13px;color:#4a6080;margin-bottom:12px"><strong>' + data.casa + '</strong> — ID: ' + data.id + '</p>' +
+        '<img src="' + p.dataUrl + '" style="max-width:100%;border-radius:8px;border:1px solid #ddd;">' +
+        '</div></div>';
+      setTimeout(function() {
+        var sizeKb = Math.round(p.dataUrl.length / 1024);
+        console.log('Invio foto ' + (i+1) + ' — dimensione: ' + sizeKb + 'KB');
+        emailjs.send('service_1wgvohb', 'template_kdcpf8r', {
+          casa: data.casa,
+          nome: data.nome,
+          cognome: 'Doc ' + (i+1),
+          message: fotoHtml
+        })
+        .then(function(){ console.log('Foto ' + (i+1) + ' inviata'); })
+        .catch(function(e){ console.warn('Errore foto ' + (i+1) + ':', e); });
+      }, (i+1) * 1500); // 1.5s di intervallo tra le email
+    });
+  })
+  .catch(function(err) {
+    console.warn('EmailJS error:', err);
+  });
+
+  // Show success screen immediately (non bloccare l'utente)
+  document.getElementById('step4').classList.remove('active');
+  var screen = document.getElementById('successScreen');
+  screen.classList.add('show');
+  var successSub = t('successSub').replace('{nome}', data.nome).replace('{ora}', data.arrivoOra||'15:00');
+  screen.innerHTML = '<div class="success-icon">✅</div>' +
+    '<div class="success-title">' + t('successTitle') + '</div>' +
+    '<div class="success-sub">' + successSub + '</div>' +
+    '<div class="success-card">' +
+      '<div class="success-row"><span class="success-key">Nome</span><span class="success-val">'+data.nome+' '+data.cognome+'</span></div>' +
+      '<div class="success-row"><span class="success-key">Ospiti</span><span class="success-val">'+adulti+' adulti'+(bambini?' + '+bambini+' bambini':'')+'</span></div>' +
+      '<div class="success-row"><span class="success-key">Arrivo previsto</span><span class="success-val">'+data.arrivoOra+'</span></div>' +
+      '<div class="success-row"><span class="success-key">Documenti</span><span class="success-val">'+data.docPhotosCount+' foto caricata/e</span></div>' +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--text3);margin-top:16px;line-height:1.6">Puoi chiudere questa pagina.</div>';
+
+  window.scrollTo(0,0);
+  updateProgress(5);
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+</script>
+</body>
+</html>
