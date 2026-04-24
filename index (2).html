@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casa Manager</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Casa Manager">
+<meta name="theme-color" content="#0D2B4E">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B4E;--navy2:#1A4A7A;--navy3:#2B6CB0;
+  --gold:#C9973A;--gold2:#F0C060;
+  --white:#FFF;--off:#F8FAFD;--bg:#EEF3FA;
+  --text:#0D1F3C;--text2:#4A6080;--text3:#8AA0BC;
+  --border:#D0DCF0;--radius:14px;
+  --shadow:0 2px 16px rgba(13,43,78,.08);
+  --shadow-md:0 4px 24px rgba(13,43,78,.12);
+  --green:#16a34a;--green-bg:#dcfce7;
+  --red:#dc2626;--red-bg:#fee2e2;
+  --orange:#d97706;--orange-bg:#fef3c7;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:32px}
+.login-screen.hidden{display:none}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:#fff;text-align:center}
+.login-logo span{color:var(--gold2)}
+.login-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;width:300px;text-align:center}
+.login-hint{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:28px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .2s}
+.pin-dot.filled{background:var(--gold2)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-key{padding:16px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:20px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pin-key:hover{background:rgba(255,255,255,.16)}
+.pin-key:active{transform:scale(.95)}
+.pin-key.del{font-size:16px}
+.pin-key.empty{visibility:hidden}
+.pin-error{color:#f87171;font-size:13px;margin-top:12px;min-height:20px}
+
+/* TOPBAR */
+.topbar{background:var(--navy);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(13,43,78,.3)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#fff}
+.logo span{color:var(--gold2)}
+.user-badge{width:32px;height:32px;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+/* LAYOUT */
+.wrap{max-width:1160px;margin:0 auto;padding:20px}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:20px}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+
+/* NOTIFICATIONS */
+.notif{background:linear-gradient(135deg,#C9973A,#F0C060);border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:none}
+.notif.show{display:block}
+.notif-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:10px}
+.notif-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--navy);padding:5px 0;border-bottom:1px solid rgba(13,43,78,.1)}
+.notif-item:last-child{border-bottom:none}
+.notif-when{font-size:11px;font-weight:700;background:var(--navy);color:#fff;padding:2px 9px;border-radius:10px;white-space:nowrap;margin-left:auto}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);padding:16px;box-shadow:var(--shadow)}
+.stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--navy);line-height:1}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* SECTION */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sec-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy)}
+
+/* PROP CARDS */
+.prop{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden}
+.prop-hdr{display:flex;align-items:center;padding:16px 18px;gap:14px;cursor:pointer;user-select:none}
+.prop-emoji{font-size:26px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--off);border-radius:12px;border:1px solid var(--border);flex-shrink:0}
+.prop-info{flex:1;min-width:0}
+.prop-name{font-weight:600;font-size:15px;color:var(--navy)}
+.prop-addr{font-size:12px;color:var(--text3)}
+.prop-badges{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-red{background:var(--red-bg);color:var(--red)}
+.b-orange{background:var(--orange-bg);color:var(--orange)}
+.b-gray{background:var(--off);color:var(--text2);border:1px solid var(--border)}
+.prop-tog{color:var(--text3);font-size:18px;flex-shrink:0;transition:transform .2s}
+.prop-tog.open{transform:rotate(180deg)}
+.prop-body{display:none;border-top:1px solid var(--border);padding:14px 18px}
+.prop-body.open{display:block}
+
+/* BOOKING ROWS */
+.bk-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;margin-bottom:6px;background:var(--off);font-size:13px}
+.bk-dates{color:var(--text2);font-size:12px;min-width:100px;flex-shrink:0}
+.bk-guest{font-weight:500;color:var(--navy);flex:1}
+.bk-src{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase;flex-shrink:0}
+.src-airbnb{background:#FF5A5F22;color:#d93025}
+.src-booking{background:#003B9522;color:#003B95}
+.src-manuale{background:#16a34a22;color:#16a34a}
+.src-sito{background:#7c3aed22;color:#7c3aed}
+.src-diretto{background:#0891b222;color:#0891b2}
+.src-altro{background:#78716c22;color:#78716c}
+.bk-acts{display:flex;gap:4px;flex-shrink:0}
+.bk-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.bk-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.bk-btn.del:hover{background:var(--red);border-color:var(--red)}
+.add-bk-btn{width:100%;padding:6px;border-radius:9px;border:1.5px dashed var(--border);background:transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px;transition:all .2s}
+.add-bk-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--off)}
+.empty{text-align:center;padding:16px;color:var(--text3);font-size:13px}
+
+/* HOTEL */
+.hotel-sect{margin-top:28px}
+.hotel-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:500px){.hotel-grid{grid-template-columns:repeat(2,1fr)}}
+.room{background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:14px;cursor:pointer;transition:all .18s}
+.room:hover{box-shadow:var(--shadow-md)}
+.room.occ{border-color:#fca5a5;background:#fff8f8}
+.room.ci{border-color:#86efac;background:#f0fdf4}
+.room-name{font-weight:600;font-size:13px;color:var(--navy);margin-bottom:3px}
+.room-type{font-size:11px;color:var(--text3);margin-bottom:8px}
+.room-st{font-size:11px;font-weight:700}
+.room-st.free{color:var(--green)}
+.room-st.occ{color:var(--red)}
+.room-st.ci{color:var(--orange)}
+.room-info{font-size:11px;color:var(--text2);margin-top:3px}
+
+/* FINANCIALS */
+.fin-sect{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-top:24px}
+.fin-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none}
+.fin-hdr.open{border-bottom:1px solid var(--border)}
+.fin-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px}
+.fin-month{font-size:12px;padding:5px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--off);outline:none}
+.fin-tog{color:var(--text3);font-size:18px;transition:transform .2s}
+.fin-tog.open{transform:rotate(180deg)}
+.fin-body{display:none;padding:20px}
+.fin-body.open{display:block}
+.fin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px}
+.fin-card{border:1.5px solid var(--border);border-radius:12px;overflow:hidden}
+.fin-card-hd{background:var(--off);padding:10px 14px;font-weight:600;font-size:13px;color:var(--navy);border-bottom:1px solid var(--border)}
+.fin-card-bd{padding:12px 14px}
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--off);font-size:13px}
+.fin-row:last-child{border-bottom:none}
+.fin-lbl{color:var(--text2)}
+.fin-val{font-weight:600;color:var(--navy)}
+.fin-val.red{color:var(--red)}
+.fin-sep{border:none;border-top:1px dashed var(--border);margin:4px 0}
+.fin-net{border-radius:9px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.fin-net.pos{background:var(--green-bg)}
+.fin-net.neg{background:var(--red-bg)}
+.fin-net.zero{background:var(--off)}
+.fin-net-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.fin-net-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.fin-net-val.pos{color:var(--green)}
+.fin-net-val.neg{color:var(--red)}
+.fin-total-bar{background:var(--navy);border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.fin-total-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.6)}
+.fin-total-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+.fin-total-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:#fff}
+.year-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.year-stat{background:var(--white);border-radius:10px;padding:12px;border:1px solid var(--border);text-align:center}
+.year-stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px}
+.year-stat-val{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy)}
+
+/* SIDEBAR */
+.sb-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.sb-hd{padding:13px 16px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy2);display:flex;align-items:center;justify-content:space-between}
+.sb-bd{padding:14px 16px}
+.occ-row{margin-bottom:10px}
+.occ-row:last-child{margin-bottom:0}
+.occ-labels{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.occ-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.occ-fill{height:100%;border-radius:3px}
+.occ-fill.high{background:var(--green)}
+.occ-fill.mid{background:var(--gold)}
+.occ-fill.low{background:var(--text3)}
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav{width:28px;height:28px;border-radius:8px;border:1px solid var(--border);background:var(--off);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:14px;transition:all .18s}
+.cal-nav:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cal-month-lbl{font-weight:600;font-size:13px;color:var(--navy)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dn{font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text3);text-align:center;padding:2px 0}
+.cal-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:11px;color:var(--text2)}
+.cal-d.today{background:var(--navy);color:#fff;font-weight:700}
+.cal-d.occ{background:#fee2e2;color:var(--red)}
+.cal-d.other{opacity:.25}
+
+/* CHECKIN */
+.ci-entry{border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--off)}
+.ci-entry:last-child{margin-bottom:0}
+.ci-name{font-weight:600;font-size:13px;color:var(--navy)}
+.ci-details{font-size:11px;color:var(--text2);margin-top:3px}
+.ci-acts{display:flex;gap:6px;margin-top:6px}
+.ci-btn{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--white);font-family:'DM Sans',sans-serif;transition:all .15s}
+.ci-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ci-btn.del:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.link-row{display:flex;gap:6px;margin-bottom:8px}
+.link-inp{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:11px;color:var(--text2);background:var(--off)}
+.link-btn{padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--white);font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all .15s}
+.link-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(13,43,78,.6);z-index:500;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:20px;box-shadow:0 20px 60px rgba(13,43,78,.2);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:24px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy);margin-bottom:18px}
+.fg{margin-bottom:12px}
+.fl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:4px;display:block}
+.fi{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--off);outline:none;transition:border .2s}
+.fi:focus{border-color:var(--navy3);background:var(--white)}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-acts{display:flex;gap:10px;margin-top:18px;justify-content:flex-end}
+.btn{padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .18s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{background:var(--off);color:var(--text2);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid #fecaca}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:5px 11px;font-size:11px;border-radius:7px}
+.cost-section{border-top:1px dashed var(--border);padding-top:12px;margin-top:8px}
+.cost-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--navy2);margin-bottom:10px}
+.total-row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);font-size:13px;margin-top:4px}
+.total-lbl{color:var(--text2);font-weight:500}
+.total-val{font-weight:700}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;transition:transform .3s;z-index:999;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">🏠 Casa <span>Manager</span></div>
+  <div class="login-box">
+    <div class="login-hint">Inserisci il PIN per accedere</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="logo">🏠 Casa <span>Manager</span></div>
+  <span id="syncStatus" style="font-size:11px;color:rgba(255,255,255,.4)"></span><button onclick="openMessages()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;margin-right:6px">✉️ Messaggi</button><button onclick="openContacts()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:DM Sans,sans-serif;margin-right:6px">👥 Contatti</button><div class="user-badge">F</div>
+</div>
+
+<div class="wrap">
+
+  <!-- NOTIFICHE -->
+  <div class="notif" id="notifBanner">
+    <div class="notif-title">🔔 Prossimi arrivi e partenze</div>
+    <div id="notifList"></div>
+  </div>
+
+  <div class="layout">
+  <div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat"><div class="stat-lbl">Strutture</div><div class="stat-val" id="sTotal">10</div><div class="stat-sub">unità totali</div></div>
+      <div class="stat"><div class="stat-lbl">Occupate oggi</div><div class="stat-val" style="color:var(--red)" id="sOcc">0</div><div class="stat-sub">in questo momento</div></div>
+      <div class="stat"><div class="stat-lbl">Check-in oggi</div><div class="stat-val" style="color:var(--orange)" id="sCi">0</div><div class="stat-sub">arrivi previsti</div></div>
+      <div class="stat"><div class="stat-lbl">Libere oggi</div><div class="stat-val" style="color:var(--green)" id="sFree">10</div><div class="stat-sub">disponibili</div></div>
+    </div>
+
+    <!-- CASE -->
+    <div class="sec-hdr"><div class="sec-title">Le mie case</div></div>
+    <div id="houseList"></div>
+
+    <!-- HOTEL -->
+    <div class="hotel-sect">
+      <div class="sec-hdr"><div class="sec-title">🏨 Hotel San Bart</div></div>
+      <div class="hotel-grid" id="hotelGrid"></div>
+    </div>
+
+    <!-- FINANCIALS -->
+    <div class="fin-sect" style="margin-top:24px">
+      <div class="fin-hdr" id="finHdr" onclick="toggleFin()">
+        <div class="fin-title">
+          <span>💶</span>
+          <span>Entrate &amp; Costi</span>
+          <select class="fin-month" id="finMonth" onclick="event.stopPropagation()" onchange="renderFin()">
+            <option value="0">Gennaio</option><option value="1">Febbraio</option>
+            <option value="2">Marzo</option><option value="3">Aprile</option>
+            <option value="4">Maggio</option><option value="5">Giugno</option>
+            <option value="6">Luglio</option><option value="7">Agosto</option>
+            <option value="8">Settembre</option><option value="9">Ottobre</option>
+            <option value="10">Novembre</option><option value="11">Dicembre</option>
+          </select>
+        </div>
+        <span class="fin-tog" id="finTog">⌄</span>
+      </div>
+      <div class="fin-body" id="finBody">
+        <div class="fin-grid" id="finGrid"></div>
+        <div class="fin-total-bar">
+          <div>
+            <div class="fin-total-lbl">Utile netto totale del mese</div>
+            <div class="fin-total-sub" id="finSub">—</div>
+          </div>
+          <div class="fin-total-val" id="finTotalVal">€ —</div>
+        </div>
+        <!-- RIEPILOGO ANNUALE -->
+        <div style="margin-top:12px;background:rgba(13,43,78,.05);border-radius:12px;padding:16px 20px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:12px">📅 Riepilogo annuale <span id="finYear"></span></div>
+          <div class="year-grid" id="yearGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RENDICONTAZIONE -->
+    <div style="margin-top:16px;background:var(--white);border-radius:14px;border:1px solid var(--border);padding:16px 20px;box-shadow:0 2px 16px rgba(13,43,78,.06)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:12px">🧾 Rendicontazione</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <a href="rendicontazione.html" style="text-decoration:none;background:var(--navy);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">🏨</span>
+          <div>
+            <div style="color:#fff;font-size:13px;font-weight:700">Hotel San Bart</div>
+            <div style="color:rgba(255,255,255,.55);font-size:11px">Entrate · Costi · Scontrini</div>
+          </div>
+        </a>
+        <a href="rendicontazione_multi.html" style="text-decoration:none;background:var(--navy);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">🏖</span>
+          <div>
+            <div style="color:#fff;font-size:13px;font-weight:700">Le Ville</div>
+            <div style="color:rgba(255,255,255,.55);font-size:11px">Duna · Terrazza · Donnam. · Gió</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div>
+    <!-- OSPITI -->
+    <div class="sb-card">
+      <div class="sb-hd">👥 Ospiti <span id="sYear" style="font-weight:400;color:var(--text3)"></span></div>
+      <div class="sb-bd" id="guestSb"></div>
+    </div>
+    <!-- CHECKIN -->
+    <div class="sb-card">
+      <div class="sb-hd">
+        📋 Pre Check-in
+        <span id="ciNewBadge" style="display:none;background:var(--green);color:#fff;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700"></span>
+      </div>
+      <div class="sb-bd" style="padding-top:0">
+        <!-- TABS -->
+        <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:12px">
+          <button id="ciTabNew" onclick="setCiTab('new')" style="flex:1;padding:10px 0;font-size:11px;font-weight:700;border:none;background:none;cursor:pointer;color:var(--navy);border-bottom:2px solid var(--navy);font-family:DM Sans,sans-serif">Nuovi</button>
+          <button id="ciTabArch" onclick="setCiTab('arch')" style="flex:1;padding:10px 0;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;font-family:DM Sans,sans-serif">Archiviati</button>
+          <button id="ciTabLink" onclick="setCiTab('link')" style="flex:1;padding:10px 0;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;font-family:DM Sans,sans-serif">🔗 Link</button>
+        </div>
+        <div id="ciList"><div style="font-size:13px;color:var(--text3)">Nessun modulo</div></div>
+        <div id="ciLinks" style="display:none"></div>
+      </div>
+    </div>
+    <!-- STAFF -->
+    <div class="sb-card">
+      <div class="sb-hd">📅 Calendari Entrate/Uscite</div>
+      <div class="sb-bd" id="staffLinks"></div>
+    </div>
+
+    <!-- OCCUPAZIONE -->
+    <div class="sb-card">
+      <div class="sb-hd">📊 Occupazione 30 giorni</div>
+      <div class="sb-bd" id="occBars"></div>
+    </div>
+    <!-- SINCRONIZZA EVENTI -->
+    <div class="sb-card">
+      <div class="sb-hd">📋 Email riepilogativa</div>
+      <div class="sb-bd">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Sincronizza tutte le prenotazioni su Firebase per ricevere correttamente la mail mattutina.</div>
+        <button onclick="syncAllBookingEvents()" id="syncEventsBtn" style="width:100%;padding:9px;border-radius:9px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border:none;cursor:pointer">🔄 Sincronizza tutti gli eventi</button>
+        <div id="syncEventsStatus" style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center"></div>
+      </div>
+    </div>
+    <!-- CALENDARIO -->
+    <div class="sb-card">
+      <div class="sb-hd">📅 Calendario</div>
+      <div class="sb-bd">
+        <div class="cal-nav-row">
+          <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+          <div class="cal-month-lbl" id="calLbl"></div>
+          <button class="cal-nav" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="overlay" id="mBooking">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" id="mBkTitle">Nuova prenotazione</div>
+    <input type="hidden" id="mBkHid">
+    <input type="hidden" id="mBkBid">
+    <div class="fg"><label class="fl">1. Nome ospite</label><input class="fi" id="mBkGuest" type="text" placeholder="es. Mario Rossi"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Telefono</label><input class="fi" id="mBkPhone" type="tel" placeholder="es. +39 333 1234567"></div>
+      <div class="fg"><label class="fl">Email</label><input class="fi" id="mBkEmail" type="email" placeholder="es. mario@email.com"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Lingua ospite</label><select class="fi" id="mBkLang"><option value="it">🇮🇹 Italiano</option><option value="en">🇬🇧 English</option><option value="de">🇩🇪 Deutsch</option><option value="fr">🇫🇷 Français</option><option value="es">🇪🇸 Español</option></select></div>
+      <div class="fg"><label class="fl">Fonte prenotazione</label><select class="fi" id="mBkFonte"><option value="airbnb">Airbnb</option><option value="booking">Booking</option><option value="sito">Sito CHIANU</option><option value="diretto">Diretto</option><option value="altro">Altro</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">2. Check-in *</label><input class="fi" id="mBkFrom" type="date" onchange="calcBk()"></div>
+      <div class="fg"><label class="fl">Check-out *</label><input class="fi" id="mBkTo" type="date" onchange="calcBk()"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">3. N° ospiti</label><input class="fi" id="mBkGuests" type="number" placeholder="1" min="1" onchange="calcBk()"></div>
+      <div class="fg"><label class="fl">4. Tariffa/notte €</label><input class="fi" id="mBkRate" type="number" placeholder="0" min="0" onchange="calcBk()"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">5. Tassa soggiorno €/pers/notte</label><input class="fi" id="mBkTax" type="number" placeholder="0" min="0" step="0.5" onchange="calcBk()"></div>
+      <div class="fg"><label class="fl">6. Totale entrate</label><div class="fi" id="mBkTotal" style="background:var(--off);color:var(--green);font-weight:700;cursor:default">—</div></div>
+    </div>
+    <div class="fg"><label class="fl">7. Note</label><input class="fi" id="mBkNotes" type="text" placeholder="es. animali, allergie..."></div>
+    <div class="cost-section">
+      <div class="cost-title">Costi prenotazione</div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Costo piattaforma €</label><input class="fi" id="mBkPlat" type="number" placeholder="0" min="0" onchange="calcBkCosts()"></div>
+        <div class="fg"><label class="fl">Costo proprietà €</label><input class="fi" id="mBkProp" type="number" placeholder="0" min="0" onchange="calcBkCosts()"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Pulizie €</label><input class="fi" id="mBkPulizie" type="number" placeholder="0" min="0" onchange="calcBkCosts()"></div>
+        <div class="fg"><label class="fl">Biancheria €</label><input class="fi" id="mBkBiancheria" type="number" placeholder="0" min="0" onchange="calcBkCosts()"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Spesa ordinaria €</label><input class="fi" id="mBkSpesaOrd" type="number" placeholder="0" min="0" onchange="calcBkCosts()"></div>
+        <div class="fg"><label class="fl">Spesa straordinaria €</label><input class="fi" id="mBkSpesaStr" type="number" placeholder="0" min="0" onchange="calcBkCosts()"></div>
+      </div>
+      <div class="total-row"><span class="total-lbl">Totale costi</span><span class="total-val" style="color:var(--red)" id="mBkTotalCosts">€ 0</span></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-danger btn-sm" id="mBkDelBtn" style="display:none;margin-right:auto" onclick="deleteBk()">🗑 Elimina</button>
+      <button class="btn btn-secondary" onclick="closeOverlay('mBooking')">Annulla</button>
+      <button class="btn btn-primary" onclick="saveBk()">✓ Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM LIST MODAL -->
+<div class="overlay" id="mRoom">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title" id="mRoomTitle">Camera</div>
+    <div id="mRoomList" style="margin-bottom:14px"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="openAddRoomBk()">+ Aggiungi prenotazione</button>
+    <div class="modal-acts" style="margin-top:10px"><button class="btn btn-secondary" onclick="closeOverlay('mRoom')">Chiudi</button></div>
+  </div>
+</div>
+
+<!-- ROOM BOOKING MODAL -->
+<div class="overlay" id="mRoomBk">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" id="mRBkTitle">Nuova prenotazione camera</div>
+    <input type="hidden" id="mRBkRid">
+    <input type="hidden" id="mRBkBid">
+    <div class="fg"><label class="fl">1. Nome ospite</label><input class="fi" id="mRBkGuest" type="text" placeholder="es. Mario Rossi"></div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Telefono</label><input class="fi" id="mRBkPhone" type="tel" placeholder="es. +39 333 1234567"></div>
+      <div class="fg"><label class="fl">Email</label><input class="fi" id="mRBkEmail" type="email" placeholder="es. mario@email.com"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">Lingua ospite</label><select class="fi" id="mRBkLang"><option value="it">🇮🇹 Italiano</option><option value="en">🇬🇧 English</option><option value="de">🇩🇪 Deutsch</option><option value="fr">🇫🇷 Français</option><option value="es">🇪🇸 Español</option></select></div>
+      <div class="fg"><label class="fl">Fonte prenotazione</label><select class="fi" id="mRBkFonte"><option value="airbnb">Airbnb</option><option value="booking">Booking</option><option value="sito">Sito CHIANU</option><option value="diretto">Diretto</option><option value="altro">Altro</option></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">2. Check-in *</label><input class="fi" id="mRBkFrom" type="date" onchange="calcRBk()"></div>
+      <div class="fg"><label class="fl">Check-out *</label><input class="fi" id="mRBkTo" type="date" onchange="calcRBk()"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">3. N° ospiti</label><input class="fi" id="mRBkGuests" type="number" placeholder="1" min="1" onchange="calcRBk()"></div>
+      <div class="fg"><label class="fl">4. Tariffa/notte €</label><input class="fi" id="mRBkRate" type="number" placeholder="0" min="0" onchange="calcRBk()"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label class="fl">5. Tassa soggiorno €/pers/notte</label><input class="fi" id="mRBkTax" type="number" placeholder="0" min="0" step="0.5" onchange="calcRBk()"></div>
+      <div class="fg"><label class="fl">6. Totale entrate</label><div class="fi" id="mRBkTotal" style="background:var(--off);color:var(--green);font-weight:700;cursor:default">—</div></div>
+    </div>
+    <div class="fg"><label class="fl">7. Note</label><input class="fi" id="mRBkNotes" type="text" placeholder=""></div>
+    <div class="cost-section">
+      <div class="cost-title">Costi prenotazione</div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Costo piattaforma €</label><input class="fi" id="mRBkPlat" type="number" placeholder="0" min="0" onchange="calcRBkCosts()"></div>
+        <div class="fg"><label class="fl">Costo proprietà €</label><input class="fi" id="mRBkProp" type="number" placeholder="0" min="0" onchange="calcRBkCosts()"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Pulizie €</label><input class="fi" id="mRBkPulizie" type="number" placeholder="0" min="0" onchange="calcRBkCosts()"></div>
+        <div class="fg"><label class="fl">Biancheria €</label><input class="fi" id="mRBkBiancheria" type="number" placeholder="0" min="0" onchange="calcRBkCosts()"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label class="fl">Spesa ordinaria €</label><input class="fi" id="mRBkSpesaOrd" type="number" placeholder="0" min="0" onchange="calcRBkCosts()"></div>
+        <div class="fg"><label class="fl">Spesa straordinaria €</label><input class="fi" id="mRBkSpesaStr" type="number" placeholder="0" min="0" onchange="calcRBkCosts()"></div>
+      </div>
+      <div class="total-row"><span class="total-lbl">Totale costi</span><span class="total-val" style="color:var(--red)" id="mRBkTotalCosts">€ 0</span></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-danger btn-sm" id="mRBkDelBtn" style="display:none;margin-right:auto" onclick="deleteRBk()">🗑 Elimina</button>
+      <button class="btn btn-secondary" onclick="closeOverlay('mRoomBk')">Annulla</button>
+      <button class="btn btn-primary" onclick="saveRBk()">✓ Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKIN DETAIL MODAL -->
+<div class="overlay" id="mCi">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-title" id="mCiTitle">Pre Check-in</div>
+    <div id="mCiBody"></div>
+    <div class="modal-acts"><button class="btn btn-secondary" onclick="closeOverlay('mCi')">Chiudi</button></div>
+  </div>
+</div>
+
+<!-- COPIA MESSAGGIO MODAL -->
+<div class="overlay" id="mCopyMsg">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">📋 Copia messaggio</div>
+    <div id="mCopyMsgGuest" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
+    <div id="mCopyMsgBtns" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="modal-acts" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeOverlay('mCopyMsg')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTATTI MODAL -->
+<div class="overlay" id="mContacts">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>👥 Contatti</span>
+      <span id="contactCount" style="font-size:13px;color:var(--text3);font-family:DM Sans,sans-serif;font-weight:400"></span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input class="fi" id="contactSearch" type="text" placeholder="Cerca nome, telefono, email..." oninput="renderContactsPanel()" style="flex:1">
+      <button class="btn btn-secondary btn-sm" onclick="exportContactsCSV()">⬇ CSV</button>
+      <button id="importContactsBtn" class="btn btn-secondary btn-sm" onclick="importAllContacts()">↑ Importa da prenotazioni</button>
+    </div>
+    <div id="contactList" style="max-height:420px;overflow-y:auto"></div>
+    <div class="modal-acts" style="margin-top:12px">
+      <button class="btn btn-secondary" onclick="closeOverlay('mContacts')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGGI MODAL -->
+<div class="overlay" id="mMsg">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-title">✉️ Modelli messaggi</div>
+    <div id="msgPropSelector" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:10px;margin-bottom:18px">
+      <button id="msgTabIt" onclick="setMsgTab('it')" class="btn btn-primary btn-sm">🇮🇹 Italiano</button>
+      <button id="msgTabEn" onclick="setMsgTab('en')" class="btn btn-secondary btn-sm">🇬🇧 English</button>
+    </div>
+    <div id="msgForm"></div>
+    <div class="modal-acts">
+      <button class="btn btn-secondary" onclick="closeOverlay('mMsg')">Annulla</button>
+      <button class="btn btn-primary" onclick="saveMessages()">✓ Salva messaggi</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function td() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function ld(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function fmt(s) { if(!s)return'—'; var p=s.split('-'); return p[2]+'/'+p[1]; }
+function nights(a,b) { if(!a||!b)return 0; return Math.max(0,Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/(864e5))); }
+function euro(n) { return '€ '+Math.round(n).toLocaleString('it-IT'); }
+function toast(m) { var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(function(){t.classList.remove('show')},2800); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+function getNum(id) { return parseFloat(document.getElementById(id).value)||0; }
+function setVal(id,v) { var e=document.getElementById(id); if(e)e.value=v||''; }
+function setTxt(id,v) { var e=document.getElementById(id); if(e)e.textContent=v||'—'; }
+
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+var BK_KEY = 'cm_bk_v3';
+
+var HOUSES = [
+  {id:1, name:'Terrazza sul mare', addr:'Donnalucata',               emoji:'🌅', bookings:[]},
+  {id:2, name:'Villa Gió',         addr:'Sampieri',                  emoji:'🌺', bookings:[]},
+  {id:3, name:'Donnamisurata',     addr:'Sampieri',                  emoji:'🏡', bookings:[]},
+  {id:4, name:'Casa Duna',         addr:'Via Arezzo 64, Donnalucata',emoji:'🌊', bookings:[]}
+];
+
+var HOTEL = { rooms: [
+  {id:1,name:'Bartolomeo', type:'Matrimoniale',bookings:[]},
+  {id:2,name:'Ignazio',    type:'Matrimoniale',bookings:[]},
+  {id:3,name:'Rosario',    type:'Matrimoniale',bookings:[]},
+  {id:4,name:'Guglielmo',  type:'Matrimoniale',bookings:[]},
+  {id:5,name:'Guglielmino',type:'Matrimoniale',bookings:[]},
+  {id:6,name:'Carmine',    type:'Matrimoniale',bookings:[]}
+]};
+
+// ══════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════
+function loadData() {
+  // Load from localStorage immediately (fast)
+  var d = JSON.parse(localStorage.getItem(BK_KEY)||'{}');
+  applyBookingData(d);
+}
+
+function applyBookingData(d) {
+  HOUSES.forEach(function(h){ h.bookings = (d['h'+h.id]||[]).slice(); });
+  HOTEL.rooms.forEach(function(r){ r.bookings = (d['r'+r.id]||[]).slice(); });
+}
+
+var ownerCosts = {};  // costs added by property owners
+
+function syncManualBookings() {
+  loadFromFirebase(function(fbData) {
+    if(!fbData) return;
+    localStorage.setItem(BK_KEY, JSON.stringify(fbData));
+    applyBookingData(fbData);
+    renderAll();
+  });
+  // Load archived checkins from Firebase
+  loadArchived(function(){ renderCheckin(); });
+
+  // Sync owner costs
+  syncOwnerCosts();
+}
+
+function loadArchived(cb) {
+  // Carica archived e read da Firebase per sync cross-device
+  Promise.all([
+    fbFetch(FB_URL + '/checkin_archived.json').then(function(r){ return r.json(); }).catch(function(){ return null; }),
+    fbFetch(FB_URL + '/checkin_read.json').then(function(r){ return r.json(); }).catch(function(){ return null; })
+  ]).then(function(results) {
+    var archived = results[0];
+    var read     = results[1];
+    if(archived && Array.isArray(archived)) {
+      localStorage.setItem('checkin_archived', JSON.stringify(archived.map(String)));
+    }
+    if(read && Array.isArray(read)) {
+      localStorage.setItem('checkin_read', JSON.stringify(read.map(String)));
+    }
+    if(cb) cb();
+  });
+}
+function syncOwnerCosts() {
+  fbFetch(FB_URL + '/owner_costs.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && typeof d === 'object') {
+        ownerCosts = d;
+        if(finOpen) renderFin();
+      }
+    })
+    .catch(function(){});
+}
+
+function saveData() {
+  var d = {};
+  HOUSES.forEach(function(h){
+    d['h'+h.id] = h.bookings.filter(function(b){ return !b.source||b.source==='manuale'; });
+  });
+  HOTEL.rooms.forEach(function(r){
+    d['r'+r.id] = r.bookings.filter(function(b){ return !b.source||b.source==='manuale'; });
+  });
+  localStorage.setItem(BK_KEY, JSON.stringify(d));
+  // Also save to Firebase for cross-device sync
+  saveToFirebase(d);
+}
+
+function saveToFirebase(d) {
+  fbFetch(FB_URL + '/manual_bookings.json', {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(d)
+  }).catch(function(err){ console.warn('Firebase save error:', err); });
+}
+
+function loadFromFirebase(callback) {
+  fbFetch(FB_URL + '/manual_bookings.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d || typeof d !== 'object') { callback(null); return; }
+      callback(d);
+    })
+    .catch(function(){ callback(null); });
+}
+
+// ══════════════════════════════════════════════
+// STATUS
+// ══════════════════════════════════════════════
+function status(bks) {
+  var t = td();
+  for(var i=0;i<bks.length;i++) {
+    var b=bks[i];
+    if(b.from<=t&&b.to>t) return {s:'occ',b:b};
+    if(b.from===t) return {s:'ci',b:b};
+  }
+  return {s:'free',b:null};
+}
+function nextBk(bks) {
+  var t=td(), nx=null;
+  bks.forEach(function(b){ if(b.from>t&&(!nx||b.from<nx.from))nx=b; });
+  return nx;
+}
+function occPct(bks, days) {
+  var t=td(), occ=0;
+  for(var i=0;i<days;i++) {
+    var dd=new Date(t+'T12:00:00'); dd.setDate(dd.getDate()+i);
+    var ds=ld(dd);
+    if(bks.some(function(b){return b.from<=ds&&b.to>ds})) occ++;
+  }
+  return Math.round(occ/days*100);
+}
+
+// ══════════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════════
+function renderNotifs() {
+  var banner=document.getElementById('notifBanner');
+  var list=document.getElementById('notifList');
+  if(!banner||!list)return;
+  var t=td(), notifs=[];
+
+  function diffG(from) {
+    return Math.round((new Date(from+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
+  }
+  function guestName(b) {
+    return (b.guest&&b.guest!=='Prenotazione'&&b.guest!=='Confermata')?b.guest:(b.source==='airbnb'?'Airbnb':'Booking');
+  }
+
+  function check(bks, label) {
+    bks.forEach(function(b){
+      var diff = diffG(b.from);
+      var profile = b.profile || 'standard';
+      if(b.to < t) return;
+
+      // Check-in/out events
+      if(diff===0) notifs.push({icon:'🔑',text:guestName(b),house:label,when:'oggi',sort:0,type:'event'});
+      if(b.to===t) notifs.push({icon:'🧳',text:guestName(b),house:label,when:'partenza oggi',sort:-1,type:'event'});
+
+      // Azioni messaggi del giorno
+      if(diff===7 && profile==='standard')
+        notifs.push({icon:'📖',text:guestName(b),house:label,when:'guida soggiorno',sort:7,type:'msg'});
+      if(diff===1)
+        notifs.push({icon:'📋',text:guestName(b),house:label,when:'pre check-in',sort:1,type:'msg'});
+      if(diff===0)
+        notifs.push({icon:'📍',text:guestName(b),house:label,when:'istruzioni arrivo',sort:0,type:'msg'});
+      if(b.to===t)
+        notifs.push({icon:'⭐',text:guestName(b),house:label,when:'richiesta recensione',sort:-1,type:'msg'});
+
+      // Verifica soggiorno — check-in era 2 giorni fa
+      var giorniDalCI = Math.round((new Date(t+'T12:00:00')-new Date(b.from+'T12:00:00'))/864e5);
+      if(giorniDalCI===2 && b.to>t)
+        notifs.push({icon:'✅',text:guestName(b),house:label,when:'verifica soggiorno',sort:2,type:'msg'});
+
+      // Orario check-out
+      var giorniAlCO = diffG(b.to);
+      if(giorniAlCO===1)
+        notifs.push({icon:'⏰',text:guestName(b),house:label,when:'orario check-out',sort:1,type:'msg'});
+    });
+  }
+
+  HOUSES.forEach(function(h){ check(h.bookings,h.emoji+' '+h.name); });
+  HOTEL.rooms.forEach(function(r){ check(r.bookings,'🏨 '+r.name); });
+  notifs.sort(function(a,b){return a.sort-b.sort;});
+  if(!notifs.length){banner.classList.remove('show');return;}
+  banner.classList.add('show');
+  list.innerHTML=notifs.map(function(n){
+    var isMsg = n.type==='msg';
+    return '<div class="notif-item">'+
+      '<span style="font-size:16px;width:24px;text-align:center">'+n.icon+'</span>'+
+      '<span style="flex:1;font-weight:500">'+n.text+' <span style="font-size:11px;opacity:.6">— '+n.house+'</span></span>'+
+      '<span class="notif-when" style="'+(isMsg?'background:var(--navy2)':'')+'">'+n.when+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// RENDER HOUSES
+// ══════════════════════════════════════════════
+function renderHouses() {
+  var t=td(), list=document.getElementById('houseList');
+  var totalOcc=0, totalCi=0;
+
+  list.innerHTML = HOUSES.map(function(h){
+    var st=status(h.bookings), nx=nextBk(h.bookings);
+    if(st.s==='occ')totalOcc++;
+    if(st.s==='ci'){totalOcc++;totalCi++;}
+
+    var badge='';
+    if(st.s==='occ') badge='<span class="badge b-red">🔴 Occupata</span>'+(st.b&&st.b.guest?'<span class="badge b-gray">'+st.b.guest+'</span>':'');
+    else if(st.s==='ci') badge='<span class="badge b-orange">🔑 Check-in oggi</span>'+(st.b&&st.b.guest?'<span class="badge b-gray">'+st.b.guest+'</span>':'');
+    else badge='<span class="badge b-green">✓ Libera</span>'+(nx?'<span class="badge b-gray">Prossimo: '+fmt(nx.from)+'</span>':'');
+
+    var showAll = document.getElementById('showAll-'+h.id) && document.getElementById('showAll-'+h.id).checked;
+    var future = h.bookings.filter(function(b){return showAll || b.to>=t}).sort(function(a,b){return a.from.localeCompare(b.from)});;
+    var rows=future.length?future.map(function(b){
+      var fonteVal = b.fonte || b.source || 'manuale';
+      var sc='src-'+fonteVal;
+      var fonteLabel = {airbnb:'Airbnb',booking:'Booking',sito:'Sito CHIANU',diretto:'Diretto',altro:'Altro',manuale:'Manuale'};
+      var sl = fonteLabel[fonteVal] || fonteVal;
+      var canEdit=!b.source||b.source==='manuale';
+      var acts=canEdit?
+        '<div class="bk-acts">'+
+          '<button class="bk-btn" data-hid="'+h.id+'" data-bid="'+b.id+'" onclick="openEditBk(this)">✏️</button>'+
+          '<button class="bk-btn" data-hid="'+h.id+'" data-bid="'+b.id+'" data-prop="'+getPropId(h.name)+'" data-type="house" onclick="openCopyMsg(this)">📋</button>'+
+          '<button class="bk-btn del" data-hid="'+h.id+'" data-bid="'+b.id+'" onclick="quickDelBk(this)">✕</button>'+
+        '</div>':'';
+      return '<div class="bk-row">'+(b.from<=t&&b.to>t?'<span>🏠</span>':'')+
+        '<span class="bk-dates">'+fmt(b.from)+' → '+fmt(b.to)+'</span>'+
+        '<span class="bk-guest">'+(b.guest||'Prenotazione')+'</span>'+
+        '<span class="bk-src '+sc+'">'+sl+'</span>'+acts+'</div>';
+    }).join(''):'<div class="empty">Nessuna prenotazione</div>';
+    rows += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--off)">'+
+      '<button class="add-bk-btn" style="margin-top:0;flex:1;margin-right:8px" data-hid="'+h.id+'" onclick="openAddBk(this)">+ Aggiungi prenotazione</button>'+
+      '<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);cursor:pointer;white-space:nowrap">'+
+        '<input type="checkbox" id="showAll-'+h.id+'" onchange="renderHouses()" style="cursor:pointer"> Tutte'+
+      '</label>'+
+    '</div>';
+
+    return '<div class="prop">'+
+      '<div class="prop-hdr" onclick="toggleProp('+h.id+')">'+
+        '<div class="prop-emoji">'+h.emoji+'</div>'+
+        '<div class="prop-info">'+
+          '<div class="prop-name">'+h.name+'</div>'+
+          '<div class="prop-addr">'+h.addr+'</div>'+
+          '<div class="prop-badges">'+badge+'</div>'+
+        '</div>'+
+        '<span class="prop-tog" id="ptog-'+h.id+'">⌄</span>'+
+      '</div>'+
+      '<div class="prop-body" id="pbody-'+h.id+'">'+rows+'</div>'+
+    '</div>';
+  }).join('');
+
+  HOTEL.rooms.forEach(function(r){var s=status(r.bookings);if(s.s==='occ')totalOcc++;if(s.s==='ci'){totalOcc++;totalCi++;}});
+  var tot=HOUSES.length+HOTEL.rooms.length;
+  document.getElementById('sTotal').textContent=tot;
+  document.getElementById('sOcc').textContent=totalOcc;
+  document.getElementById('sCi').textContent=totalCi;
+  document.getElementById('sFree').textContent=tot-totalOcc;
+}
+
+function toggleProp(id) {
+  var b=document.getElementById('pbody-'+id), t=document.getElementById('ptog-'+id);
+  if(b){b.classList.toggle('open');t&&t.classList.toggle('open');}
+}
+
+// ══════════════════════════════════════════════
+// RENDER HOTEL
+// ══════════════════════════════════════════════
+function renderHotel() {
+  var t=td();
+  document.getElementById('hotelGrid').innerHTML=HOTEL.rooms.map(function(r){
+    var st=status(r.bookings), nx=nextBk(r.bookings);
+    var cls=st.s==='occ'?'occ':st.s==='ci'?'ci':'';
+    var stL=st.s==='occ'?'Occupata':st.s==='ci'?'Check-in oggi':'Libera';
+    var stC=st.s==='free'?'free':st.s==='ci'?'ci':'occ';
+    var info=st.b?'<div class="room-info">'+(st.b.guest||'Prenotazione')+'</div>':nx?'<div class="room-info">Prossimo: '+fmt(nx.from)+'</div>':'';
+    var cnt=r.bookings.filter(function(b){return b.to>=t}).length;
+    if(cnt)info+='<div class="room-info">'+cnt+' prenotazion'+(cnt===1?'e':'i')+'</div>';
+    return '<div class="room '+cls+'" onclick="openRoomModal('+r.id+')">'+
+      '<div class="room-name">'+r.name+'</div>'+
+      '<div class="room-type">'+r.type+'</div>'+
+      '<div class="room-st '+stC+'">'+stL+'</div>'+info+'</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// RENDER SIDEBAR
+// ══════════════════════════════════════════════
+function renderOcc() {
+  var items=HOUSES.map(function(h){return{name:h.emoji+' '+h.name,pct:occPct(h.bookings,30)};});
+  var hp=Math.round(HOTEL.rooms.reduce(function(s,r){return s+occPct(r.bookings,30);},0)/HOTEL.rooms.length);
+  items.push({name:'🏨 San Bart',pct:hp});
+  document.getElementById('occBars').innerHTML=items.map(function(it){
+    var fc=it.pct>=70?'high':it.pct>=30?'mid':'low';
+    return '<div class="occ-row">'+
+      '<div class="occ-labels"><span style="color:var(--text2);font-weight:500">'+it.name+'</span><span style="font-weight:700;color:var(--navy)">'+it.pct+'%</span></div>'+
+      '<div class="occ-bar"><div class="occ-fill '+fc+'" style="width:'+it.pct+'%"></div></div></div>';
+  }).join('');
+}
+
+var calY=new Date().getFullYear(), calM=new Date().getMonth();
+function renderCal() {
+  var months=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  document.getElementById('calLbl').textContent=months[calM]+' '+calY;
+  var t=td(), occ={};
+  HOUSES.forEach(function(h){h.bookings.forEach(function(b){
+    var d=new Date(b.from+'T12:00:00'),e=new Date(b.to+'T12:00:00');
+    while(d<e){occ[ld(d)]=true;d.setDate(d.getDate()+1);}
+  });});
+  var first=(new Date(calY,calM,1).getDay()+6)%7, dim=new Date(calY,calM+1,0).getDate();
+  var h=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map(function(d){return'<div class="cal-dn">'+d+'</div>';}).join('');
+  for(var i=0;i<first;i++)h+='<div class="cal-d other"></div>';
+  for(var day=1;day<=dim;day++){
+    var ds=calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    h+='<div class="cal-d'+(ds===t?' today':occ[ds]?' occ':'')+'">'+day+'</div>';
+  }
+  document.getElementById('calGrid').innerHTML=h;
+}
+function changeMonth(d){calM+=d;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}renderCal();}
+
+function renderGuestSb() {
+  var year=new Date().getFullYear(), ys=year+'-01-01', ye=year+'-12-31';
+  document.getElementById('sYear').textContent=year;
+  var guests=0, nts=0;
+  function count(bks){bks.forEach(function(b){if(b.from<=ye&&b.to>ys){var f=b.from<ys?ys:b.from,t2=b.to>ye?ye:b.to;var n=Math.round((new Date(t2+'T12:00:00')-new Date(f+'T12:00:00'))/864e5);guests+=(b.numGuests||1);nts+=n;}});}
+  HOUSES.forEach(function(h){count(h.bookings);});
+  HOTEL.rooms.forEach(function(r){count(r.bookings);});
+  document.getElementById('guestSb').innerHTML=
+    '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text2)">Ospiti</span><span style="font-weight:700;color:var(--navy);font-family:Cormorant Garamond,serif;font-size:20px">'+guests+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px"><span style="color:var(--text2)">Notti vendute</span><span style="font-weight:700;color:var(--navy);font-family:Cormorant Garamond,serif;font-size:20px">'+nts+'</span></div>';
+}
+
+// ══════════════════════════════════════════════
+// BOOKING MODAL - HOUSE
+// ══════════════════════════════════════════════
+function bkFields() {
+  return {
+    guest:   document.getElementById('mBkGuest').value.trim(),
+    phone:   document.getElementById('mBkPhone').value.trim(),
+    email:   document.getElementById('mBkEmail').value.trim(),
+    lang:    document.getElementById('mBkLang').value,
+    from:    document.getElementById('mBkFrom').value,
+    to:      document.getElementById('mBkTo').value,
+    numGuests: parseInt(document.getElementById('mBkGuests').value)||1,
+    rate:    getNum('mBkRate'),
+    cityTax: getNum('mBkTax'),
+    plat:    getNum('mBkPlat'),
+    prop:    getNum('mBkProp'),
+    pulizie: getNum('mBkPulizie'),
+    biancheria: getNum('mBkBiancheria'),
+    spesaOrd: getNum('mBkSpesaOrd'),
+    spesaStr: getNum('mBkSpesaStr'),
+    notes:   document.getElementById('mBkNotes').value.trim(),
+    fonte:   document.getElementById('mBkFonte').value,
+  };
+}
+
+function calcBk() {
+  var f=bkFields(), n=nights(f.from,f.to);
+  var rev = n*f.rate + n*f.numGuests*f.cityTax;
+  setTxt('mBkTotal', n>0?euro(rev)+' ('+n+' notti)':'—');
+}
+function calcBkCosts() {
+  var f=bkFields();
+  var costs=f.plat+f.prop+f.pulizie+f.biancheria+f.spesaOrd+f.spesaStr;
+  setTxt('mBkTotalCosts', euro(costs));
+}
+
+function clearBkForm() {
+  ['mBkGuest','mBkPhone','mBkEmail','mBkFrom','mBkTo','mBkGuests','mBkRate','mBkTax',
+   'mBkPlat','mBkProp','mBkPulizie','mBkBiancheria','mBkSpesaOrd','mBkSpesaStr','mBkNotes'
+  ].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  setTxt('mBkTotal','—');
+  setTxt('mBkTotalCosts',euro(0));
+  var ls=document.getElementById('mBkLang'); if(ls) ls.value='it';
+  var fs=document.getElementById('mBkFonte'); if(fs) fs.value='airbnb';
+}
+
+function openAddBk(btn) {
+  var hid=parseInt(btn.dataset.hid);
+  var h=HOUSES.find(function(x){return x.id===hid;});
+  if(!h)return;
+  document.getElementById('mBkTitle').textContent='Nuova prenotazione — '+h.name;
+  document.getElementById('mBkHid').value=hid;
+  document.getElementById('mBkBid').value='';
+  document.getElementById('mBkDelBtn').style.display='none';
+  clearBkForm();
+  document.getElementById('mBooking').classList.add('open');
+  setTimeout(function(){document.getElementById('mBkGuest').focus();},100);
+}
+
+function openEditBk(btn) {
+  var hid=parseInt(btn.dataset.hid), bid=btn.dataset.bid;
+  var h=HOUSES.find(function(x){return x.id===hid;}); if(!h)return;
+  var b=h.bookings.find(function(x){return String(x.id)===String(bid);}); if(!b)return;
+  document.getElementById('mBkTitle').textContent='Modifica prenotazione';
+  document.getElementById('mBkHid').value=hid;
+  document.getElementById('mBkBid').value=bid;
+  setVal('mBkGuest',b.guest); setVal('mBkPhone',b.phone); setVal('mBkEmail',b.email); setVal('mBkFrom',b.from); setVal('mBkTo',b.to);
+  var lsel=document.getElementById('mBkLang'); if(lsel) lsel.value=b.lang||'it';
+  var fsel=document.getElementById('mBkFonte'); if(fsel) fsel.value=b.fonte||b.source||'airbnb';
+  setVal('mBkGuests',b.numGuests); setVal('mBkRate',b.rate); setVal('mBkTax',b.cityTax);
+  setVal('mBkPlat',b.plat); setVal('mBkProp',b.prop);
+  setVal('mBkPulizie',b.pulizie); setVal('mBkBiancheria',b.biancheria);
+  setVal('mBkSpesaOrd',b.spesaOrd); setVal('mBkSpesaStr',b.spesaStr);
+  setVal('mBkNotes',b.notes);
+  document.getElementById('mBkDelBtn').style.display='inline-flex';
+  calcBk(); calcBkCosts();
+  document.getElementById('mBooking').classList.add('open');
+}
+
+function saveBk() {
+  var f=bkFields();
+  var hid=parseInt(document.getElementById('mBkHid').value);
+  var bid=document.getElementById('mBkBid').value;
+  if(!f.from||!f.to){toast('Inserisci le date');return;}
+  if(f.from>=f.to){toast('Check-out deve essere dopo check-in');return;}
+  var h=HOUSES.find(function(x){return x.id===hid;}); if(!h)return;
+  var n=nights(f.from,f.to);
+  var obj={guest:f.guest||'Prenotazione',phone:f.phone||'',email:f.email||'',lang:f.lang||'it',from:f.from,to:f.to,numGuests:f.numGuests,
+    rate:f.rate,cityTax:f.cityTax,plat:f.plat,prop:f.prop,
+    pulizie:f.pulizie,biancheria:f.biancheria,spesaOrd:f.spesaOrd,spesaStr:f.spesaStr,
+    nights:n,notes:f.notes,fonte:f.fonte||'airbnb',source:'manuale'};
+  var isNew = !bid;
+  if(bid){var b=h.bookings.find(function(x){return String(x.id)===String(bid);});if(b)Object.assign(b,obj);}
+  else{obj.id=Date.now();h.bookings.push(obj);}
+  saveData();
+  if(isNew) { writeBookingEvent(obj, h.name, 'casa'); writeContact(obj, h.name); }
+  closeOverlay('mBooking'); renderAll(); toast('✓ Prenotazione salvata');
+}
+
+function deleteBk() {
+  if(!confirm('Eliminare questa prenotazione?'))return;
+  var hid=parseInt(document.getElementById('mBkHid').value);
+  var bid=document.getElementById('mBkBid').value;
+  var h=HOUSES.find(function(x){return x.id===hid;}); if(!h)return;
+  h.bookings=h.bookings.filter(function(b){return String(b.id)!==String(bid);});
+  saveData(); closeOverlay('mBooking'); renderAll(); toast('Prenotazione eliminata');
+}
+
+function quickDelBk(btn) {
+  if(!confirm('Eliminare?'))return;
+  var hid=parseInt(btn.dataset.hid), bid=btn.dataset.bid;
+  var h=HOUSES.find(function(x){return x.id===hid;}); if(!h)return;
+  h.bookings=h.bookings.filter(function(b){return String(b.id)!==String(bid);});
+  saveData(); renderAll(); toast('Prenotazione eliminata');
+}
+
+// ══════════════════════════════════════════════
+// BOOKING MODAL - ROOM
+// ══════════════════════════════════════════════
+var curRoomId=null;
+
+function rbkFields() {
+  return {
+    guest:   document.getElementById('mRBkGuest').value.trim(),
+    phone:   document.getElementById('mRBkPhone').value.trim(),
+    email:   document.getElementById('mRBkEmail').value.trim(),
+    lang:    document.getElementById('mRBkLang').value,
+    from:    document.getElementById('mRBkFrom').value,
+    to:      document.getElementById('mRBkTo').value,
+    numGuests: parseInt(document.getElementById('mRBkGuests').value)||1,
+    rate:    getNum('mRBkRate'),
+    cityTax: getNum('mRBkTax'),
+    plat:    getNum('mRBkPlat'),
+    prop:    getNum('mRBkProp'),
+    pulizie: getNum('mRBkPulizie'),
+    biancheria: getNum('mRBkBiancheria'),
+    spesaOrd: getNum('mRBkSpesaOrd'),
+    spesaStr: getNum('mRBkSpesaStr'),
+    notes:   document.getElementById('mRBkNotes').value.trim(),
+    fonte:   document.getElementById('mRBkFonte').value,
+  };
+}
+
+function calcRBk() {
+  var f=rbkFields(), n=nights(f.from,f.to);
+  setTxt('mRBkTotal', n>0?euro(n*f.rate+n*f.numGuests*f.cityTax)+' ('+n+' notti)':'—');
+}
+function calcRBkCosts() {
+  var f=rbkFields();
+  setTxt('mRBkTotalCosts', euro(f.plat+f.prop+f.pulizie+f.biancheria+f.spesaOrd+f.spesaStr));
+}
+
+function clearRBkForm() {
+  ['mRBkGuest','mRBkPhone','mRBkEmail','mRBkFrom','mRBkTo','mRBkGuests','mRBkRate','mRBkTax',
+   'mRBkPlat','mRBkProp','mRBkPulizie','mRBkBiancheria','mRBkSpesaOrd','mRBkSpesaStr','mRBkNotes'
+  ].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  setTxt('mRBkTotal','—');
+  setTxt('mRBkTotalCosts',euro(0));
+  var rls=document.getElementById('mRBkLang'); if(rls) rls.value='it';
+  var rfs=document.getElementById('mRBkFonte'); if(rfs) rfs.value='airbnb';
+}
+
+function openRoomModal(rid) {
+  curRoomId=rid;
+  var r=HOTEL.rooms.find(function(x){return x.id===rid;}); if(!r)return;
+  var t=td();
+  document.getElementById('mRoomTitle').textContent='🛏 Camera '+r.name;
+  var showAllRoom = document.getElementById('showAllRoom') && document.getElementById('showAllRoom').checked;
+  var future=r.bookings.filter(function(b){return showAllRoom||b.to>=t}).sort(function(a,b){return a.from.localeCompare(b.from)});
+  var toggleHtml='<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);cursor:pointer"><input type="checkbox" id="showAllRoom" '+(showAllRoom?'checked':'')+' onchange="openRoomModal(curRoomId)" style="cursor:pointer"> Mostra tutte</label></div>';
+  var listHtml=future.length?future.map(function(b){
+    var cur=b.from<=t&&b.to>t;
+    return '<div class="bk-row">'+(cur?'<span>🏠</span>':'')+
+      '<span class="bk-dates">'+fmt(b.from)+' → '+fmt(b.to)+'</span>'+
+      '<span class="bk-guest">'+(b.guest||'Prenotazione')+'</span>'+
+      '<div class="bk-acts">'+
+        '<button class="bk-btn" data-rid="'+rid+'" data-bid="'+b.id+'" onclick="openEditRBk(this)">✏️</button>'+
+        '<button class="bk-btn" data-rid="'+rid+'" data-bid="'+b.id+'" data-prop="hotel_san_bart" data-type="hotel" onclick="openCopyMsg(this)">📋</button>'+
+        '<button class="bk-btn del" data-rid="'+rid+'" data-bid="'+b.id+'" onclick="quickDelRBk(this)">✕</button>'+
+      '</div></div>';
+  }).join(''):'<div class="empty">Nessuna prenotazione</div>';
+  document.getElementById('mRoomList').innerHTML=toggleHtml+listHtml;
+  document.getElementById('mRoom').classList.add('open');
+}
+
+function openAddRoomBk() {
+  var r=HOTEL.rooms.find(function(x){return x.id===curRoomId;}); if(!r)return;
+  document.getElementById('mRBkTitle').textContent='Nuova prenotazione — '+r.name;
+  document.getElementById('mRBkRid').value=curRoomId;
+  document.getElementById('mRBkBid').value='';
+  document.getElementById('mRBkDelBtn').style.display='none';
+  clearRBkForm();
+  document.getElementById('mRoomBk').classList.add('open');
+  setTimeout(function(){document.getElementById('mRBkGuest').focus();},100);
+}
+
+function openEditRBk(btn) {
+  var rid=parseInt(btn.dataset.rid), bid=btn.dataset.bid;
+  var r=HOTEL.rooms.find(function(x){return x.id===rid;}); if(!r)return;
+  var b=r.bookings.find(function(x){return String(x.id)===String(bid);}); if(!b)return;
+  document.getElementById('mRBkTitle').textContent='Modifica — '+r.name;
+  document.getElementById('mRBkRid').value=rid;
+  document.getElementById('mRBkBid').value=bid;
+  setVal('mRBkGuest',b.guest); setVal('mRBkPhone',b.phone); setVal('mRBkEmail',b.email); setVal('mRBkFrom',b.from); setVal('mRBkTo',b.to);
+  var rlsel=document.getElementById('mRBkLang'); if(rlsel) rlsel.value=b.lang||'it';
+  var rfsel=document.getElementById('mRBkFonte'); if(rfsel) rfsel.value=b.fonte||b.source||'airbnb';
+  setVal('mRBkGuests',b.numGuests); setVal('mRBkRate',b.rate); setVal('mRBkTax',b.cityTax);
+  setVal('mRBkPlat',b.plat); setVal('mRBkProp',b.prop);
+  setVal('mRBkPulizie',b.pulizie); setVal('mRBkBiancheria',b.biancheria);
+  setVal('mRBkSpesaOrd',b.spesaOrd); setVal('mRBkSpesaStr',b.spesaStr);
+  setVal('mRBkNotes',b.notes);
+  document.getElementById('mRBkDelBtn').style.display='inline-flex';
+  calcRBk(); calcRBkCosts();
+  document.getElementById('mRoomBk').classList.add('open');
+}
+
+function saveRBk() {
+  var f=rbkFields();
+  var rid=parseInt(document.getElementById('mRBkRid').value);
+  var bid=document.getElementById('mRBkBid').value;
+  if(!f.from||!f.to){toast('Inserisci le date');return;}
+  if(f.from>=f.to){toast('Check-out deve essere dopo check-in');return;}
+  var r=HOTEL.rooms.find(function(x){return x.id===rid;}); if(!r)return;
+  var n=nights(f.from,f.to);
+  var obj={guest:f.guest||'Prenotazione',phone:f.phone||'',email:f.email||'',lang:f.lang||'it',from:f.from,to:f.to,numGuests:f.numGuests,
+    rate:f.rate,cityTax:f.cityTax,plat:f.plat,prop:f.prop,
+    pulizie:f.pulizie,biancheria:f.biancheria,spesaOrd:f.spesaOrd,spesaStr:f.spesaStr,
+    nights:n,notes:f.notes,fonte:f.fonte||'airbnb',source:'manuale'};
+  var isNew = !bid;
+  if(bid){var b=r.bookings.find(function(x){return String(x.id)===String(bid);});if(b)Object.assign(b,obj);}
+  else{obj.id=Date.now();r.bookings.push(obj);}
+  saveData();
+  if(isNew) { writeBookingEvent(obj, 'Hotel San Bart - ' + r.name, 'hotel'); writeContact(obj, 'Hotel San Bart'); }
+  closeOverlay('mRoomBk'); openRoomModal(rid); renderAll(); toast('✓ Prenotazione salvata');
+}
+
+function deleteRBk() {
+  if(!confirm('Eliminare?'))return;
+  var rid=parseInt(document.getElementById('mRBkRid').value);
+  var bid=document.getElementById('mRBkBid').value;
+  var r=HOTEL.rooms.find(function(x){return x.id===rid;}); if(!r)return;
+  r.bookings=r.bookings.filter(function(b){return String(b.id)!==String(bid);});
+  saveData(); closeOverlay('mRoomBk'); openRoomModal(rid); renderAll(); toast('Prenotazione eliminata');
+}
+
+function quickDelRBk(btn) {
+  if(!confirm('Eliminare?'))return;
+  var rid=parseInt(btn.dataset.rid), bid=btn.dataset.bid;
+  var r=HOTEL.rooms.find(function(x){return x.id===rid;}); if(!r)return;
+  r.bookings=r.bookings.filter(function(b){return String(b.id)!==String(bid);});
+  saveData(); openRoomModal(rid); renderAll(); toast('Prenotazione eliminata');
+}
+
+// ══════════════════════════════════════════════
+// FINANCIALS
+// ══════════════════════════════════════════════
+var finOpen=false;
+
+function toggleFin() {
+  finOpen=!finOpen;
+  document.getElementById('finBody').classList.toggle('open',finOpen);
+  document.getElementById('finTog').classList.toggle('open',finOpen);
+  document.getElementById('finHdr').classList.toggle('open',finOpen);
+  if(finOpen) renderFin();
+}
+
+function monthRevenue(bks, ms, me) {
+  var rev=0,nts=0,guests=0,cityTax=0,plat=0,prop=0,pulizie=0,biancheria=0,spesaOrd=0,spesaStr=0;
+  bks.forEach(function(b){
+    if(b.from<=me&&b.to>ms){
+      var f=b.from<ms?ms:b.from, t2=b.to>me?me:b.to;
+      var n=Math.round((new Date(t2+'T12:00:00')-new Date(f+'T12:00:00'))/864e5);
+      rev     += (b.rate   ||0)*n;
+      cityTax += (b.cityTax||0)*(b.numGuests||1)*n;
+      nts     += n;
+      guests  += (b.numGuests||1);
+      // Costs only attributed to check-in month
+      var ciInMonth = b.from>=ms && b.from<=me;
+      if(ciInMonth){
+        plat       += (b.plat       ||0);
+        prop       += (b.prop       ||0);
+        pulizie    += (b.pulizie    ||0);
+        biancheria += (b.biancheria ||0);
+        spesaOrd   += (b.spesaOrd  ||0);
+        spesaStr   += (b.spesaStr  ||0);
+      }
+    }
+  });
+  var lorde=rev+cityTax;
+  var totalCosts=plat+prop+pulizie+biancheria+spesaOrd+spesaStr;
+  var entNette=lorde-plat-prop;
+  var utile=lorde-totalCosts;
+  return {rev:rev,nts:nts,guests:guests,cityTax:cityTax,lorde:lorde,
+    plat:plat,prop:prop,pulizie:pulizie,biancheria:biancheria,spesaOrd:spesaOrd,spesaStr:spesaStr,
+    totalCosts:totalCosts,entNette:entNette,utile:utile,
+    avgRate:nts>0?Math.round(rev/nts):0};
+}
+
+function yearRevenue(bks, year) {
+  return monthRevenue(bks, year+'-01-01', year+'-12-31');
+}
+
+function renderFin() {
+  var sel=document.getElementById('finMonth');
+  if(!sel.dataset.init){sel.value=new Date().getMonth();sel.dataset.init='1';}
+  var m=parseInt(sel.value), y=new Date().getFullYear();
+  var ms=y+'-'+String(m+1).padStart(2,'0')+'-01';
+  var me=y+'-'+String(m+1).padStart(2,'0')+'-'+String(new Date(y,m+1,0).getDate()).padStart(2,'0');
+
+  var entities=HOUSES.map(function(h){return{label:h.emoji+' '+h.name,bks:h.bookings};});
+  var hb=[]; HOTEL.rooms.forEach(function(r){hb=hb.concat(r.bookings);}); 
+  entities.push({label:'🏨 Hotel San Bart',bks:hb});
+
+  var grandLorde=0,grandCosts=0,grandUtile=0;
+  var grid=document.getElementById('finGrid');
+  grid.innerHTML='';
+
+  entities.forEach(function(e){
+    var mr=monthRevenue(e.bks,ms,me);
+    // Add owner costs for this property and month
+    var ocKey = e.id; // 'h1','h2','h3' or 'hotel'
+    var ocList = (ownerCosts[ocKey]||[]).filter(function(c){ return c.date>=ms && c.date<=me; });
+    var ocTotal = ocList.reduce(function(s,c){ return s+(parseFloat(c.amount)||0); }, 0);
+    grandLorde+=mr.lorde; grandCosts+=mr.totalCosts; grandUtile+=mr.utile;
+    var nc=mr.utile>0?'pos':mr.utile<0?'neg':'zero';
+
+    var card=document.createElement('div'); card.className='fin-card';
+    var hd=document.createElement('div'); hd.className='fin-card-hd'; hd.textContent=e.label; card.appendChild(hd);
+    var bd=document.createElement('div'); bd.className='fin-card-bd';
+
+    function row(lbl,val,red){
+      var d=document.createElement('div'); d.className='fin-row';
+      var l=document.createElement('span'); l.className='fin-lbl'; l.textContent=lbl;
+      var v=document.createElement('span'); v.className='fin-val'+(red?' red':''); v.textContent=val;
+      d.appendChild(l); d.appendChild(v); return d;
+    }
+    function sep(){var d=document.createElement('hr');d.className='fin-sep';return d;}
+
+    bd.appendChild(row('Notti occupate',     mr.nts));
+    bd.appendChild(row('Numero ospiti',      mr.guests));
+    bd.appendChild(row('Tariffa media/notte',euro(mr.avgRate)));
+    bd.appendChild(row('Entrate soggiorni',  euro(mr.rev)));
+    bd.appendChild(row('Tassa soggiorno',    euro(mr.cityTax)));
+    bd.appendChild(row('Entrate lorde totali',euro(mr.lorde)));
+    bd.appendChild(sep());
+    bd.appendChild(row('Costo piattaforma',  euro(mr.plat),   true));
+    bd.appendChild(row('Costo proprietà',    euro(mr.prop),   true));
+    bd.appendChild(row('Pulizie',            euro(mr.pulizie),true));
+    bd.appendChild(row('Biancheria',         euro(mr.biancheria),true));
+    bd.appendChild(row('Spesa ordinaria',    euro(mr.spesaOrd),true));
+    bd.appendChild(row('Spesa straordinaria',euro(mr.spesaStr),true));
+    if(ocTotal>0){
+      bd.appendChild(row('Costi proprietà',euro(ocTotal),true));
+    }
+    bd.appendChild(sep());
+    bd.appendChild(row('Entrate nette',      euro(mr.entNette)));
+
+    var net=document.createElement('div'); net.className='fin-net '+nc;
+    var nl=document.createElement('span'); nl.className='fin-net-lbl'; nl.textContent='Utile netto';
+    var nv=document.createElement('span'); nv.className='fin-net-val '+nc; nv.textContent=euro(mr.utile);
+    net.appendChild(nl); net.appendChild(nv);
+    bd.appendChild(net);
+    card.appendChild(bd);
+    grid.appendChild(card);
+  });
+
+  document.getElementById('finTotalVal').textContent=euro(grandUtile);
+  document.getElementById('finSub').textContent='Entrate: '+euro(grandLorde)+' — Costi: '+euro(grandCosts);
+
+  // YEARLY
+  var year=new Date().getFullYear();
+  document.getElementById('finYear').textContent=year;
+  var allBks=[]; HOUSES.forEach(function(h){allBks=allBks.concat(h.bookings);}); HOTEL.rooms.forEach(function(r){allBks=allBks.concat(r.bookings);});
+  var yr=yearRevenue(allBks,year);
+  var margin=yr.lorde>0?Math.round(yr.utile/yr.lorde*100):0;
+  var mc=margin>=0?'var(--green)':'var(--red)';
+  var nc2=yr.utile>=0?'var(--green)':'var(--red)';
+
+  function ystat(lbl,val,color){
+    return '<div class="year-stat"><div class="year-stat-lbl">'+lbl+'</div><div class="year-stat-val" style="color:'+(color||'var(--navy)')+'">'+val+'</div></div>';
+  }
+  document.getElementById('yearGrid').innerHTML=
+    ystat('Entrate',euro(yr.lorde))+
+    ystat('Costi',euro(yr.totalCosts))+
+    ystat('Utile netto',euro(yr.utile),nc2)+
+    ystat('Margine %',margin+'%',mc);
+
+  renderGuestSb();
+}
+
+// ══════════════════════════════════════════════
+// PRE CHECK-IN
+// ══════════════════════════════════════════════
+var ciTab = 'new';
+
+function setCiTab(tab) {
+  ciTab = tab;
+  ['new','arch','link'].forEach(function(t){
+    var btn = document.getElementById('ciTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(btn){
+      btn.style.color = tab===t ? 'var(--navy)' : 'var(--text3)';
+      btn.style.borderBottomColor = tab===t ? 'var(--navy)' : 'transparent';
+      btn.style.fontWeight = tab===t ? '700' : '600';
+    }
+  });
+  renderCheckin();
+}
+
+function renderCheckin() {
+  var forms    = JSON.parse(localStorage.getItem('checkin_forms')||'[]');
+  var read     = JSON.parse(localStorage.getItem('checkin_read')||'[]');
+  var archived = JSON.parse(localStorage.getItem('checkin_archived')||'[]');
+
+  var newForms  = forms.filter(function(f){ return archived.indexOf(String(f.id))===-1; });
+  var archForms = forms.filter(function(f){ return archived.indexOf(String(f.id))!==-1; });
+  var newCnt    = newForms.filter(function(f){ return read.indexOf(String(f.id))===-1; }).length;
+
+  var badge=document.getElementById('ciNewBadge');
+  if(badge){badge.textContent=newCnt+' nuovi';badge.style.display=newCnt>0?'inline-block':'none';}
+
+  // Show/hide panels based on tab
+  var listEl  = document.getElementById('ciList');
+  var linksEl = document.getElementById('ciLinks');
+  if(listEl)  listEl.style.display  = ciTab==='link' ? 'none' : 'block';
+  if(linksEl) linksEl.style.display = ciTab==='link' ? 'block' : 'none';
+
+  var list=document.getElementById('ciList');
+  if(list && ciTab!=='link'){
+    var toShow = ciTab==='new' ? newForms : archForms;
+    if(!toShow.length){
+      list.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">'+(ciTab==='new'?'Nessun modulo nuovo':'Nessun modulo archiviato')+'</div>';
+    } else {
+      list.innerHTML=toShow.map(function(f){
+        var isNew=read.indexOf(f.id)===-1;
+        var isArch=archived.indexOf(f.id)!==-1;
+        var dt=new Date(f.timestamp).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});
+        return '<div class="ci-entry">'+
+          '<div class="ci-name">'+(f.nome||'')+' '+(f.cognome||'')+
+            (isNew&&!isArch?' <span class="badge b-green" style="font-size:9px">NUOVO</span>':'')+'</div>'+
+          '<div class="ci-details">🏠 '+(f.casa||'N/D')+' &nbsp;👥 '+(f.adulti||1)+' &nbsp;'+dt+'</div>'+
+          '<div class="ci-acts">'+
+            '<button class="ci-btn" data-cid="'+f.id+'" onclick="openCiDetail(this)">👁</button>'+
+            (!isArch?'<button class="ci-btn" data-cid="'+f.id+'" onclick="archiveCi(this)" title="Archivia">📁</button>':
+                     '<button class="ci-btn" data-cid="'+f.id+'" onclick="unarchiveCi(this)" title="Ripristina">↩</button>')+
+            '<button class="ci-btn del" data-cid="'+f.id+'" onclick="delCi(this)" title="Elimina">✕</button>'+
+          '</div></div>';
+      }).join('');
+    }
+  }
+
+  if(linksEl && ciTab==='link'){
+    var base=window.location.href.replace('index.html','').replace(/[?#].*$/,'').replace(/\/$/,'');
+    // Houses
+    var houseLinks = HOUSES.map(function(h){
+      var url=base+'/checkin_form.html?casa='+encodeURIComponent(h.name);
+      return '<div style="margin-bottom:8px">'+
+        '<div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">'+h.emoji+' '+h.name+'</div>'+
+        '<div class="link-row">'+
+          '<input class="link-inp" value="'+url+'" readonly id="cilink-h'+h.id+'">'+
+          '<button class="link-btn" data-lid="h'+h.id+'" onclick="copyLink(this)">Copia</button>'+
+          '<button class="link-btn" data-url="'+encodeURIComponent(url)+'" data-name="'+h.name+'" onclick="showQR(this)">QR</button>'+
+        '</div></div>';
+    }).join('');
+
+    // Hotel rooms
+    var roomLinks = '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:10px 0 6px">🏨 Hotel San Bart</div>';
+    roomLinks += HOTEL.rooms.map(function(r){
+      var roomName = 'Hotel San Bart — Camera '+r.name;
+      var url = base+'/checkin_form.html?casa='+encodeURIComponent(roomName);
+      return '<div style="margin-bottom:8px">'+
+        '<div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">🛏 '+r.name+'</div>'+
+        '<div class="link-row">'+
+          '<input class="link-inp" value="'+url+'" readonly id="cilink-r'+r.id+'">'+
+          '<button class="link-btn" data-lid="r'+r.id+'" onclick="copyLink(this)">Copia</button>'+
+          '<button class="link-btn" data-url="'+encodeURIComponent(url)+'" data-name="'+roomName+'" onclick="showQR(this)">QR</button>'+
+        '</div></div>';
+    }).join('');
+
+    linksEl.innerHTML = houseLinks + roomLinks;
+  }
+}
+
+function openCiDetail(btn) {
+  var cid=btn.dataset.cid;
+  var forms=JSON.parse(localStorage.getItem('checkin_forms')||'[]');
+  var f=forms.find(function(x){return String(x.id)===String(cid);}); if(!f)return;
+  var read=JSON.parse(localStorage.getItem('checkin_read')||'[]');
+  read=read.map(String);
+  if(read.indexOf(String(f.id))===-1){
+    read.push(String(f.id));
+    localStorage.setItem('checkin_read',JSON.stringify(read));
+    fbFetch(FB_URL+'/checkin_read.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(read)}).catch(function(){});
+  }
+  document.getElementById('mCiTitle').textContent=(f.nome||'')+' '+(f.cognome||'')+' — Pre Check-in';
+  var rows=[['Casa',f.casa||'N/D'],['Nome',(f.nome||'')+' '+(f.cognome||'')],['Nascita',f.nascita||'—'],['Nazionalità',f.nazionalita||'—'],['Telefono',f.telefono||'—'],['Email',f.email||'—'],['Documento',(f.docTipo||'')+' '+(f.docNum||'')],['Adulti',f.adulti||1],['Bambini',f.bambini||0],['Animali',f.animali||'—'],['Arrivo',f.arrivoOra||'—'],['Inviato',new Date(f.timestamp).toLocaleString('it-IT')]];
+  document.getElementById('mCiBody').innerHTML='<table style="width:100%;border-collapse:collapse">'+rows.map(function(r){return'<tr><td style="padding:5px 8px;color:var(--text2);font-size:12px;border-bottom:1px solid var(--bg);width:40%">'+r[0]+'</td><td style="padding:5px 8px;font-weight:500;font-size:13px;border-bottom:1px solid var(--bg)">'+r[1]+'</td></tr>';}).join('')+'</table>'+(f.firma?'<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px">Firma</div><img src="'+f.firma+'" style="max-width:100%;border:1px solid var(--border);border-radius:8px"></div>':'');
+  document.getElementById('mCi').classList.add('open');
+  renderCheckin();
+}
+
+function saveArchived(arr) {
+  localStorage.setItem('checkin_archived', JSON.stringify(arr));
+  fbFetch(FB_URL+'/checkin_archived.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(arr)}).catch(function(){});
+}
+function archiveCi(btn) {
+  var cid=String(btn.dataset.cid);
+  var archived=JSON.parse(localStorage.getItem('checkin_archived')||'[]').map(String);
+  if(archived.indexOf(cid)===-1){archived.push(cid);saveArchived(archived);}
+  renderCheckin(); toast('📁 Modulo archiviato');
+}
+
+function unarchiveCi(btn) {
+  var cid=String(btn.dataset.cid);
+  var archived=JSON.parse(localStorage.getItem('checkin_archived')||'[]').map(String).filter(function(id){return id!==cid;});
+  saveArchived(archived);
+  renderCheckin(); toast('↩ Modulo ripristinato');
+}
+
+function delCi(btn) {
+  if(!confirm('Eliminare definitivamente?'))return;
+  var cid=btn.dataset.cid;
+  var forms=JSON.parse(localStorage.getItem('checkin_forms')||'[]');
+  var archived=JSON.parse(localStorage.getItem('checkin_archived')||'[]');
+  var newForms=forms.filter(function(f){return String(f.id)!==String(cid);});
+  var newArchived=archived.filter(function(id){return id!==cid;});
+  localStorage.setItem('checkin_forms',JSON.stringify(newForms));
+  localStorage.setItem('checkin_archived',JSON.stringify(newArchived));
+  // Elimina da Firebase
+  fbFetch(FB_URL+'/checkins/'+cid+'.json',{method:'DELETE'}).catch(function(){});
+  fbFetch(FB_URL+'/checkin_archived.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(newArchived)}).catch(function(){});
+  renderCheckin(); toast('Modulo eliminato');
+}
+
+function copyLink(btn) {
+  var inp=document.getElementById('cilink-'+btn.dataset.lid);
+  if(inp)navigator.clipboard.writeText(inp.value).then(function(){toast('✓ Link copiato!');});
+}
+
+function showQR(btn) {
+  var url=decodeURIComponent(btn.dataset.url);
+  var w=window.open('','_blank','width=380,height=480');
+  w.document.write('<html><body style="text-align:center;font-family:sans-serif;padding:30px;background:#F2F6FC"><h2 style="color:#0D2B4E;margin-bottom:4px">QR Pre Check-in</h2><p style="color:#4A6080;margin-bottom:20px">'+btn.dataset.name+'</p><img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(url)+'" style="border:1px solid #D0DCF0;border-radius:12px;padding:12px;background:#fff"><br><br><a href="'+url+'" style="font-size:11px;color:#2B6CB0;word-break:break-all">'+url+'</a></body></html>');
+}
+
+// ══════════════════════════════════════════════
+// ENRICH PORTAL BOOKINGS
+// ══════════════════════════════════════════════
+// Deduplicate bookings: same property + overlapping dates = keep one
+// Apply saved enrichments after Firebase sync
+// ══════════════════════════════════════════════
+// STAFF LINKS
+// ══════════════════════════════════════════════
+function renderStaffLinks() {
+  var el = document.getElementById('staffLinks');
+  if(!el) return;
+  var base = window.location.href.replace('index.html','').replace(/[?#].*$/,'').replace(/\/$/,'');
+  var html = '';
+
+  var staffLinks = [
+    {lid:'staff',    label:'🌅🌺🏡 Terrazza · Villa Gió · Donnamisurata', file:'staff.html'},
+    {lid:'duna',     label:'🌊 Casa Duna',                                file:'staff_duna.html'},
+    {lid:'sanbart',  label:'🏨 Hotel San Bart',                            file:'staff_sanbart.html'},
+  ];
+  staffLinks.forEach(function(s){
+    var url = base + '/' + s.file;
+    html += '<div style="margin-bottom:10px">'+
+      '<div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:4px">'+s.label+'</div>'+
+      '<div style="display:flex;gap:5px">'+
+        '<input style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:10px;color:var(--text2);background:var(--off)" value="'+url+'" readonly id="stlink-'+s.lid+'">'+
+        '<button data-lid="'+s.lid+'" onclick="copyStaffLink(this.dataset.lid)" style="padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:DM Sans,sans-serif">Copia</button>'+
+      '</div></div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function copyStaffLink(lid) {
+  var inp = document.getElementById('stlink-'+lid);
+  if(inp) navigator.clipboard.writeText(inp.value).then(function(){ toast('✓ Link copiato!'); });
+}
+
+// ══════════════════════════════════════════════
+// MESSAGGI TEMPLATES
+// ══════════════════════════════════════════════
+var MSG_KEYS = ['welcome','guide','precheckin','arrival','verify','checkout','review','lastminute'];
+
+var MSG_LABELS_IT = {
+  welcome:    '1. Benvenuto (dopo prenotazione)',
+  guide:      '2. Guida soggiorno (7 gg prima)',
+  precheckin: '3. Pre check-in (giorno prima)',
+  arrival:    '4. Istruzioni arrivo (giorno arrivo)',
+  verify:     '5. Verifica soggiorno (48h dopo)',
+  checkout:   '6. Orario check-out (sera prima)',
+  review:     '7. Richiesta recensione (dopo partenza)',
+  lastminute: '8. Last minute (unico messaggio)'
+};
+var MSG_LABELS_EN = {
+  welcome:    '1. Welcome (after booking)',
+  guide:      '2. Stay guide (7 days before)',
+  precheckin: '3. Pre check-in (day before)',
+  arrival:    '4. Arrival instructions (arrival day)',
+  verify:     '5. Stay check (48h after)',
+  checkout:   '6. Check-out time (evening before)',
+  review:     '7. Review request (after departure)',
+  lastminute: '8. Last minute (single message)'
+};
+
+var PROPERTIES_MSG = [
+  {id: 'terrazza',       label: 'Terrazza sul mare'},
+  {id: 'villa_gio',      label: 'Villa Gió'},
+  {id: 'donnamisurata',  label: 'Donnamisurata'},
+  {id: 'casa_duna',      label: 'Casa Duna'},
+  {id: 'hotel_san_bart', label: 'Hotel San Bart'}
+];
+
+var HOUSE_TO_PROP_ID = {
+  'terrazza sul mare': 'terrazza',
+  'villa gio':         'villa_gio',
+  'villa gió':    'villa_gio',
+  'donnamisurata':     'donnamisurata',
+  'casa duna':         'casa_duna',
+};
+
+function getPropId(propertyName) {
+  var key = (propertyName || '').toLowerCase().trim();
+  if (key.indexOf('hotel san bart') !== -1 || key.indexOf('san bart') !== -1) return 'hotel_san_bart';
+  return HOUSE_TO_PROP_ID[key] || 'terrazza';
+}
+
+function makeDefaultMsgs(propLabel) {
+  return {
+    it: {
+      welcome:    'Ciao {guest}! Sono Fabrizio, manager di ' + propLabel + '.\n\nLa tua prenotazione e confermata:\nCheck-in: {checkIn}\nCheck-out: {checkOut}\nNotti: {nights}\n\nTra 7 giorni riceverai la guida completa.\n\nA presto,\nFabrizio',
+      guide:      'Ciao {guest}! Manca una settimana al tuo arrivo a ' + propLabel + '.\n\nEcco la guida per il tuo soggiorno:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nA presto,\nFabrizio',
+      precheckin: 'Ciao {guest}! Domani arrivi a ' + propLabel + '.\n\nCompila il modulo pre check-in:\nhttps://sberla74.github.io/Casa-Manager/checkin\n\nA domani!\nFabrizio',
+      arrival:    'Ciao {guest}! Benvenuto a ' + propLabel + '.\n\nCome raggiungerci:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nBuon soggiorno!\nFabrizio',
+      verify:     'Ciao {guest}! Come sta andando il soggiorno a ' + propLabel + '?\n\nTutto ok? Hai bisogno di qualcosa?\n\nFabrizio',
+      checkout:   'Ciao {guest}! Domani e il tuo ultimo giorno a ' + propLabel + '.\n\nA che ora prevedi il check-out?\n\nGrazie,\nFabrizio',
+      review:     'Ciao {guest}! Grazie per aver soggiornato a ' + propLabel + '.\n\nCi farebbe piacere una tua recensione:\nhttps://google.com\n\nA presto!\nFabrizio',
+      lastminute:  'Ciao {guest}! Sono Fabrizio, manager di ' + propLabel + '.\n\nBenvenuto! La tua prenotazione e confermata:\nCheck-in: {checkIn} - Check-out: {checkOut}\n\nEcco la tua guida soggiorno:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nCome raggiungerci:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nBuon soggiorno!\nFabrizio'
+    },
+    en: {
+      welcome:    'Hi {guest}! I am Fabrizio, manager of ' + propLabel + '.\n\nYour booking is confirmed:\nCheck-in: {checkIn}\nCheck-out: {checkOut}\nNights: {nights}\n\nOne week before arrival you will receive the complete guide.\n\nSee you soon,\nFabrizio',
+      guide:      'Hi {guest}! One week to go before your arrival at ' + propLabel + '.\n\nHere is your stay guide:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nBest,\nFabrizio',
+      precheckin: 'Hi {guest}! Tomorrow you arrive at ' + propLabel + '.\n\nPlease fill in the pre check-in form:\nhttps://sberla74.github.io/Casa-Manager/checkin\n\nSee you tomorrow!\nFabrizio',
+      arrival:    'Hi {guest}! Welcome to ' + propLabel + '.\n\nHow to find us:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nEnjoy your stay!\nFabrizio',
+      verify:     'Hi {guest}! Hope you are enjoying your stay at ' + propLabel + '.\n\nIs everything ok? Need anything?\n\nFabrizio',
+      checkout:   'Hi {guest}! Tomorrow is your last day at ' + propLabel + '.\n\nWhat time are you planning to check out?\n\nThank you,\nFabrizio',
+      review:     'Hi {guest}! Thank you for staying at ' + propLabel + '.\n\nWe would appreciate a review:\nhttps://google.com\n\nHope to see you again!\nFabrizio',
+      lastminute:  'Hi {guest}! I am Fabrizio, manager of ' + propLabel + '.\n\nWelcome! Your booking is confirmed:\nCheck-in: {checkIn} - Check-out: {checkOut}\n\nHere is your stay guide:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nHow to find us:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nEnjoy your stay!\nFabrizio'
+    }
+  };
+}
+
+var msgTemplates = null;
+var msgCurrentTab = 'it';
+var msgCurrentProp = 'terrazza';
+
+function loadMessageTemplates(callback) {
+  fbFetch(FB_URL + '/message_templates.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      msgTemplates = (d && typeof d === 'object') ? d : {};
+      if(callback) callback();
+    })
+    .catch(function(){
+      msgTemplates = {};
+      if(callback) callback();
+    });
+}
+
+function getTemplatesForProp(propId) {
+  if (msgTemplates && msgTemplates[propId] && msgTemplates[propId].it) {
+    return msgTemplates[propId];
+  }
+  var prop = PROPERTIES_MSG.find(function(p){ return p.id === propId; });
+  return makeDefaultMsgs(prop ? prop.label : propId);
+}
+
+function openMessages() {
+  if(!msgTemplates) {
+    loadMessageTemplates(function(){ openMessages(); });
+    return;
+  }
+  msgCurrentTab = 'it';
+  msgCurrentProp = 'terrazza';
+  renderMsgPropSelector();
+  renderMsgForm();
+  document.getElementById('mMsg').classList.add('open');
+}
+
+function setMsgTab(lang) {
+  msgCurrentTab = lang;
+  document.getElementById('msgTabIt').className = lang === 'it' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+  document.getElementById('msgTabEn').className = lang === 'en' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+  renderMsgForm();
+}
+
+function setMsgProp(propId) {
+  msgCurrentProp = propId;
+  renderMsgForm();
+  document.querySelectorAll('.msg-prop-btn').forEach(function(b){
+    b.className = 'msg-prop-btn btn btn-sm ' + (b.dataset.prop === propId ? 'btn-primary' : 'btn-secondary');
+  });
+}
+
+function renderMsgPropSelector() {
+  var html = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">';
+  PROPERTIES_MSG.forEach(function(p, i){
+    html += '<button class="msg-prop-btn btn btn-sm ' + (i===0?'btn-primary':'btn-secondary') + '" data-prop="' + p.id + '" onclick="setMsgProp(&quot;' + p.id + '&quot;)">' + p.label + '</button>';
+  });
+  html += '</div>';
+  document.getElementById('msgPropSelector').innerHTML = html;
+}
+
+function renderMsgForm() {
+  var lang = msgCurrentTab;
+  var labels = lang === 'it' ? MSG_LABELS_IT : MSG_LABELS_EN;
+  var templates = getTemplatesForProp(msgCurrentProp);
+  var html = '';
+  MSG_KEYS.forEach(function(k){
+    var val = (templates[lang] && templates[lang][k]) ? templates[lang][k] : '';
+    val = val.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html += '<div class="fg" style="margin-bottom:14px">';
+    html += '<label class="fl">' + labels[k] + '</label>';
+    html += '<div style="font-size:10px;color:var(--text3);margin-bottom:4px">Variabili: {guest} {property} {checkIn} {checkOut} {nights}</div>';
+    html += '<textarea class="fi" id="msg_' + lang + '_' + k + '" rows="4" style="resize:vertical;font-size:13px;line-height:1.5">' + val + '</textarea>';
+    html += '</div>';
+  });
+  document.getElementById('msgForm').innerHTML = html;
+}
+
+function saveMessages() {
+  if(!msgTemplates[msgCurrentProp]) msgTemplates[msgCurrentProp] = {};
+  // Salva solo la lingua attualmente visibile nel form
+  var lang = msgCurrentTab;
+  if(!msgTemplates[msgCurrentProp][lang]) msgTemplates[msgCurrentProp][lang] = {};
+  MSG_KEYS.forEach(function(k){
+    var el = document.getElementById('msg_' + lang + '_' + k);
+    if(el) msgTemplates[msgCurrentProp][lang][k] = el.value;
+  });
+  fbFetch(FB_URL + '/message_templates/' + msgCurrentProp + '/' + lang + '.json', {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(msgTemplates[msgCurrentProp][lang])
+  }).then(function(){
+    toast('\u2713 Messaggi salvati');
+    closeOverlay('mMsg');
+  }).catch(function(){
+    toast('Errore nel salvataggio');
+  });
+}
+
+function applyTemplate(template, data) {
+  return (template || '')
+    .replace(/{guest}/g, data.guest || '')
+    .replace(/{property}/g, data.property || '')
+    .replace(/{checkIn}/g, data.checkIn || '')
+    .replace(/{checkOut}/g, data.checkOut || '')
+    .replace(/{nights}/g, data.nights || '');
+}
+
+
+// ══════════════════════════════════════════════
+// COPIA MESSAGGIO
+// ══════════════════════════════════════════════
+var MSG_BTN_LABELS = {
+  welcome:    '1. Benvenuto',
+  guide:      '2. Guida soggiorno',
+  precheckin: '3. Pre check-in',
+  arrival:    '4. Istruzioni arrivo',
+  verify:     '5. Verifica soggiorno',
+  checkout:   '6. Orario check-out',
+  review:     '7. Richiesta recensione',
+  lastminute: '⚡ 8. Last minute'
+};
+
+var copyMsgBooking = null;
+var copyMsgPropId = null;
+
+function openCopyMsg(btn) {
+  var type = btn.dataset.type || 'house';
+  var bid = btn.dataset.bid;
+  var propId = btn.dataset.prop;
+  var b = null;
+
+  if (type === 'house') {
+    var hid = parseInt(btn.dataset.hid);
+    var h = HOUSES.find(function(x){ return x.id === hid; });
+    if(h) b = h.bookings.find(function(x){ return String(x.id) === String(bid); });
+  } else {
+    var rid = parseInt(btn.dataset.rid);
+    var r = HOTEL.rooms.find(function(x){ return x.id === rid; });
+    if(r) b = r.bookings.find(function(x){ return String(x.id) === String(bid); });
+  }
+
+  if(!b) return;
+  copyMsgBooking = b;
+  copyMsgPropId = propId;
+
+  document.getElementById('mCopyMsgGuest').textContent = (b.guest || 'Ospite') + ' · ' + fmt(b.from) + ' → ' + fmt(b.to);
+
+  var propTemplates = getTemplatesForProp(propId);
+  var lang = b.lang || 'it';
+  var langTemplates = (propTemplates && propTemplates[lang]) ? propTemplates[lang] : {};
+  var data = {
+    guest: b.guest || 'Ospite',
+    property: propId,
+    checkIn: b.from,
+    checkOut: b.to,
+    nights: String(b.nights || '')
+  };
+
+  var msgsData = {};
+  MSG_KEYS.forEach(function(k){
+    var defaultMsgs = makeDefaultMsgs(propId);
+    msgsData[k] = applyTemplate(langTemplates[k] || (defaultMsgs[lang] && defaultMsgs[lang][k]) || '', data);
+  });
+
+  var container = document.getElementById('mCopyMsgBtns');
+  container.innerHTML = '';
+  MSG_KEYS.forEach(function(k){
+    var msgBtn = document.createElement('button');
+    msgBtn.textContent = MSG_BTN_LABELS[k];
+    msgBtn.className = 'btn btn-secondary';
+    msgBtn.style.cssText = 'width:100%;text-align:left;margin-bottom:4px';
+    (function(txt){ msgBtn.addEventListener('click', function(){ copyMsgText(txt); }); })(msgsData[k]);
+    container.appendChild(msgBtn);
+  });
+
+  document.getElementById('mCopyMsg').classList.add('open');
+}
+
+function copyMsgText(text) {
+  navigator.clipboard.writeText(text).then(function(){
+    toast('\u2713 Messaggio copiato!');
+    closeOverlay('mCopyMsg');
+  }).catch(function(){
+    // Fallback per Safari iOS
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); toast('\u2713 Messaggio copiato!'); }
+    catch(e) { toast('Copia manuale: tieni premuto il testo'); }
+    document.body.removeChild(ta);
+    closeOverlay('mCopyMsg');
+  });
+}
+
+// ══════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════
+function renderAll() {
+  renderNotifs();
+  renderHouses();
+  renderHotel();
+  renderOcc();
+  renderCal();
+  renderGuestSb();
+  renderCheckin();
+  renderStaffLinks();
+  if(finOpen) renderFin();
+}
+
+// ══════════════════════════════════════════════
+// BOOKING EVENTS — trigger per automazione guest
+// ══════════════════════════════════════════════
+function writeBookingEvent(booking, propertyName, propertyType) {
+  var now = Date.now();
+  var msPerDay = 86400000;
+  var daysUntilCheckin = Math.round(
+    (new Date(booking.from + 'T12:00:00').getTime() - now) / msPerDay
+  );
+  var profile;
+  if (daysUntilCheckin >= 7)      profile = 'standard';
+  else if (daysUntilCheckin >= 2) profile = 'short_notice';
+  else                            profile = 'last_minute';
+
+  var lang = booking.lang || 'it';
+  var g = booking.guest || 'Ospite';
+  var p = propertyName;
+  var ci = booking.from;
+  var co = booking.to;
+  var n = booking.nights;
+
+  var propId = getPropId(propertyName);
+  var propTemplates = getTemplatesForProp(propId);
+  var langTemplates = (propTemplates && propTemplates[lang]) ? propTemplates[lang] : {};
+  var data = {guest: g, property: p, checkIn: ci, checkOut: co, nights: String(n)};
+  var msgs = {};
+  MSG_KEYS.forEach(function(k){
+    var defaultMsgs = makeDefaultMsgs(propertyName);
+    msgs[k] = applyTemplate(langTemplates[k] || defaultMsgs[lang][k] || '', data);
+  });
+
+  var event = {
+    eventType:        'new_booking',
+    bookingId:        booking.id,
+    guest:            booking.guest,
+    phone:            booking.phone    || '',
+    email:            booking.email    || '',
+    checkIn:          booking.from,
+    checkOut:         booking.to,
+    nights:           booking.nights,
+    numGuests:        booking.numGuests,
+    property:         propertyName,
+    propertyType:     propertyType,
+    lang:             lang,
+    daysUntilCheckin: daysUntilCheckin,
+    profile:          profile,
+    createdAt:        now,
+    messages:         msgs
+  };
+  fbFetch(FB_URL + '/booking_events/' + booking.id + '.json', {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(event)
+  }).catch(function(err){ console.warn('Booking event write error:', err); });
+
+  fetch('https://hook.eu1.make.com/zyl6ydcexgovf32t4d35mn7hv7uaaql2', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(event)
+  }).catch(function(err){ console.warn('Make webhook error:', err); });
+}
+
+// ══════════════════════════════════════════════
+// SYNC TUTTI GLI EVENTI (per mail riepilogativa)
+// ══════════════════════════════════════════════
+function syncAllBookingEvents() {
+  var btn = document.getElementById('syncEventsBtn');
+  var status = document.getElementById('syncEventsStatus');
+  if(btn) { btn.disabled = true; btn.textContent = '⏳ In corso...'; }
+  if(status) status.textContent = '';
+
+  // Prima legge gli eventi già esistenti su Firebase
+  fbFetch(FB_URL + '/booking_events.json')
+    .then(function(r){ return r.json(); })
+    .then(function(existing){
+      var existingIds = existing ? Object.keys(existing) : [];
+      var today = td();
+
+      // Raccogli tutte le prenotazioni future o in corso
+      var toSync = [];
+      HOUSES.forEach(function(h){
+        h.bookings.forEach(function(b){
+          if(b.to >= today && existingIds.indexOf(String(b.id)) === -1) {
+            toSync.push({booking: b, propName: h.name, propType: 'casa'});
+          }
+        });
+      });
+      HOTEL.rooms.forEach(function(r){
+        r.bookings.forEach(function(b){
+          if(b.to >= today && existingIds.indexOf(String(b.id)) === -1) {
+            toSync.push({booking: b, propName: 'Hotel San Bart - ' + r.name, propType: 'hotel'});
+          }
+        });
+      });
+
+      if(toSync.length === 0) {
+        if(btn) { btn.disabled = false; btn.textContent = '🔄 Sincronizza tutti gli eventi'; }
+        if(status) status.textContent = '✓ Tutto già sincronizzato';
+        return;
+      }
+
+      // Scrive gli eventi mancanti uno per uno (senza triggerare il webhook Make)
+      var count = 0;
+      toSync.forEach(function(item){
+        var b = item.booking;
+        var now = Date.now();
+        var daysUntilCheckin = Math.round((new Date(b.from+'T12:00:00').getTime() - now) / 86400000);
+        var profile = daysUntilCheckin >= 7 ? 'standard' : daysUntilCheckin >= 2 ? 'short_notice' : 'last_minute';
+        var event = {
+          eventType:        'new_booking',
+          bookingId:        b.id,
+          guest:            b.guest    || 'Ospite',
+          phone:            b.phone    || '',
+          email:            b.email    || '',
+          checkIn:          b.from,
+          checkOut:         b.to,
+          nights:           b.nights,
+          numGuests:        b.numGuests,
+          property:         item.propName,
+          propertyType:     item.propType,
+          lang:             b.lang     || 'it',
+          daysUntilCheckin: daysUntilCheckin,
+          profile:          profile,
+          createdAt:        now,
+          messages:         {}
+        };
+        fbFetch(FB_URL + '/booking_events/' + b.id + '.json', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(event)
+        }).then(function(){ count++; if(count === toSync.length) {
+          if(btn) { btn.disabled = false; btn.textContent = '🔄 Sincronizza tutti gli eventi'; }
+          if(status) status.textContent = '✓ Sincronizzati ' + count + ' eventi';
+          toast('✓ ' + count + ' prenotazioni sincronizzate');
+        }}).catch(function(){
+          count++;
+          if(count === toSync.length) {
+            if(btn) { btn.disabled = false; btn.textContent = '🔄 Sincronizza tutti gli eventi'; }
+            if(status) status.textContent = '⚠️ Alcuni errori, riprova';
+          }
+        });
+      });
+    })
+    .catch(function(){
+      if(btn) { btn.disabled = false; btn.textContent = '🔄 Sincronizza tutti gli eventi'; }
+      if(status) status.textContent = '⚠️ Errore connessione Firebase';
+    });
+}
+
+// ══════════════════════════════════════════════
+// CONTATTI
+// ══════════════════════════════════════════════
+function writeContact(booking, propertyName) {
+  if (!booking.phone && !booking.email) return; // nessun contatto, skip
+  // Usa il telefono come chiave univoca (o email se no phone)
+  var contactKey = (booking.phone || booking.email)
+    .replace(/[^a-zA-Z0-9]/g, '_');
+  var contact = {
+    name:       booking.guest  || '',
+    phone:      booking.phone  || '',
+    email:      booking.email  || '',
+    lang:       booking.lang   || 'it',
+    property:   propertyName,
+    checkIn:    booking.from,
+    checkOut:   booking.to,
+    updatedAt:  Date.now()
+  };
+  fbFetch(FB_URL + '/contacts/' + contactKey + '.json', {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(contact)
+  }).catch(function(err){ console.warn('Contact write error:', err); });
+}
+
+var allContacts = [];
+
+function loadContacts(callback) {
+  fbFetch(FB_URL + '/contacts.json')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      allContacts = [];
+      if(d && typeof d === 'object') {
+        Object.keys(d).forEach(function(k){
+          if(d[k]) allContacts.push(d[k]);
+        });
+        allContacts.sort(function(a,b){ return (b.updatedAt||0)-(a.updatedAt||0); });
+      }
+      if(callback) callback();
+    })
+    .catch(function(){
+      allContacts = [];
+      if(callback) callback();
+    });
+}
+
+function importAllContacts() {
+  var btn = document.getElementById('importContactsBtn');
+  if(btn) btn.textContent = 'Importazione...';
+  var count = 0;
+  var promises = [];
+
+  // Importa dalle prenotazioni case
+  HOUSES.forEach(function(h){
+    h.bookings.forEach(function(b){
+      if(b.phone || b.email) {
+        count++;
+        var contactKey = (b.phone || b.email).replace(/[^a-zA-Z0-9]/g, '_');
+        var contact = {
+          name:      b.guest   || '',
+          phone:     b.phone   || '',
+          email:     b.email   || '',
+          lang:      b.lang    || 'it',
+          property:  h.name,
+          checkIn:   b.from,
+          checkOut:  b.to,
+          updatedAt: b.id || Date.now()
+        };
+        promises.push(fbFetch(FB_URL + '/contacts/' + contactKey + '.json', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(contact)
+        }));
+      }
+    });
+  });
+
+  // Importa dalle prenotazioni hotel
+  HOTEL.rooms.forEach(function(r){
+    r.bookings.forEach(function(b){
+      if(b.phone || b.email) {
+        count++;
+        var contactKey = (b.phone || b.email).replace(/[^a-zA-Z0-9]/g, '_');
+        var contact = {
+          name:      b.guest   || '',
+          phone:     b.phone   || '',
+          email:     b.email   || '',
+          lang:      b.lang    || 'it',
+          property:  'Hotel San Bart',
+          checkIn:   b.from,
+          checkOut:  b.to,
+          updatedAt: b.id || Date.now()
+        };
+        promises.push(fbFetch(FB_URL + '/contacts/' + contactKey + '.json', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(contact)
+        }));
+      }
+    });
+  });
+
+  Promise.all(promises).then(function(){
+    toast('\u2713 Importati ' + count + ' contatti');
+    if(btn) btn.textContent = '\u2191 Importa da prenotazioni';
+    loadContacts(function(){ renderContactsPanel(); });
+  }).catch(function(){
+    toast('Errore importazione');
+    if(btn) btn.textContent = '\u2191 Importa da prenotazioni';
+  });
+}
+
+function openContacts() {
+  loadContacts(function(){ renderContactsPanel(); });
+  document.getElementById('mContacts').classList.add('open');
+}
+
+function renderContactsPanel() {
+  var search = (document.getElementById('contactSearch') || {}).value || '';
+  var filter = (document.getElementById('contactFilter') || {}).value || '';
+  var list = allContacts.filter(function(c){
+    var matchSearch = !search || (c.name||'').toLowerCase().includes(search.toLowerCase()) ||
+      (c.phone||'').includes(search) || (c.email||'').toLowerCase().includes(search.toLowerCase());
+    var matchFilter = !filter || c.property === filter;
+    return matchSearch && matchFilter;
+  });
+
+  var propNames = [...new Set(allContacts.map(function(c){ return c.property; }))].sort();
+  var filterHtml = '<select id="contactFilter" onchange="renderContactsPanel()" class="fi" style="margin-bottom:12px;max-width:220px">' +
+    '<option value="">Tutte le strutture</option>' +
+    propNames.map(function(p){ return '<option value="' + p + '"' + (filter===p?' selected':'') + '>' + p + '</option>'; }).join('') +
+    '</select>';
+
+  var html = '';
+  if(!list.length) {
+    html = '<div style="color:var(--text3);font-size:13px;padding:12px 0">Nessun contatto trovato</div>';
+  } else {
+    html = list.map(function(c){
+      var dt = c.checkIn ? c.checkIn : '';
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px">' +
+        '<div style="font-weight:600;color:var(--navy)">' + (c.name||'—') + '</div>' +
+        '<div style="color:var(--text2);margin-top:2px">' +
+          (c.phone ? '📱 ' + c.phone + ' &nbsp;' : '') +
+          (c.email ? '✉️ ' + c.email : '') +
+        '</div>' +
+        '<div style="color:var(--text3);font-size:11px;margin-top:2px">' + (c.property||'') + (dt ? ' · ' + dt : '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('contactList').innerHTML = filterHtml + html;
+  document.getElementById('contactCount').textContent = list.length + ' contatti';
+}
+
+function exportContactsCSV() {
+  var search = (document.getElementById('contactSearch') || {}).value || '';
+  var filter = (document.getElementById('contactFilter') || {}).value || '';
+  var list = allContacts.filter(function(c){
+    var matchSearch = !search || (c.name||'').toLowerCase().includes(search.toLowerCase()) ||
+      (c.phone||'').includes(search) || (c.email||'').toLowerCase().includes(search.toLowerCase());
+    var matchFilter = !filter || c.property === filter;
+    return matchSearch && matchFilter;
+  });
+
+  var csv = 'Nome,Telefono,Email,Lingua,Struttura,Check-in,Check-out\n';
+  list.forEach(function(c){
+    csv += [c.name,c.phone,c.email,c.lang,c.property,c.checkIn,c.checkOut]
+      .map(function(v){ return '"' + (v||'').replace(/"/g,'""') + '"'; })
+      .join(',') + '\n';
+  });
+
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'contatti_casa_manager.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// FIREBASE AUTH (Anonymous)
+// ══════════════════════════════════════════════
+var FB_URL      = 'https://casa-manager-24414-default-rtdb.europe-west1.firebasedatabase.app';
+var FB_API_KEY  = 'AIzaSyplaceholder';   // ← verrà sovrascritto sotto
+var FB_TOKEN_KEY = 'cm_fb_token';
+
+// Recupera la API key dal progetto Firebase (necessaria per Auth REST)
+// IMPORTANTE: sostituisci con la tua vera API key (vedi Firebase Console → Impostazioni progetto → Web API key)
+// Es: 'AIzaSyAbc123...'
+// Per ora la inseriamo hardcoded qui sotto:
+var FIREBASE_WEB_API_KEY = 'AIzaSyC5u2VAYDuPIdOXlSXFMS6ozTOglc7cA-g';
+
+function getFbToken() {
+  try {
+    var t = JSON.parse(localStorage.getItem(FB_TOKEN_KEY)||'null');
+    if (t && t.token && Date.now() < t.expires) return t.token;
+  } catch(e) {}
+  return null;
+}
+
+function saveFbToken(token, expiresIn) {
+  localStorage.setItem(FB_TOKEN_KEY, JSON.stringify({
+    token: token,
+    expires: Date.now() + (parseInt(expiresIn||3600) - 60) * 1000
+  }));
+}
+
+function signInAnonymous(cb) {
+  var existing = getFbToken();
+  if (existing) { if(cb) cb(existing); return; }
+  fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + FIREBASE_WEB_API_KEY, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({returnSecureToken: true})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.idToken) {
+      saveFbToken(d.idToken, d.expiresIn);
+      if(cb) cb(d.idToken);
+    } else {
+      console.warn('Firebase Auth error:', d);
+      if(cb) cb(null);
+    }
+  })
+  .catch(function(e){ console.warn('Firebase Auth fetch error:', e); if(cb) cb(null); });
+}
+
+// Wrapper fetch che aggiunge ?auth=TOKEN automaticamente
+function fbFetch(url, options) {
+  var token = getFbToken();
+  var sep = url.indexOf('?') >= 0 ? '&' : '?';
+  var authUrl = token ? url + sep + 'auth=' + token : url;
+  return fetch(authUrl, options);
+}
+
+// ══════════════════════════════════════════════
+// FIREBASE SYNC
+// ══════════════════════════════════════════════
+
+// Normalize name for matching (remove accents, lowercase)
+function norm(s) {
+  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+}
+
+// Map Firebase property names to local house/room IDs
+var HOUSE_MAP = {
+  'casa duna':           4,
+  'terrazza sul mare':   1,
+  'villa gio':           2,
+  'donnamisurata':       3,
+};
+var ROOM_MAP = {
+  'bartolomeo':  1,
+  'ignazio':     2,
+  'rosario':     3,
+  'guglielmo':   4,
+  'guglielmino': 5,
+  'carmine':     6,
+};
+
+function updateContactFromCheckin(form) {
+  if (!form.telefono && !form.email) return;
+  var contactKey = (form.telefono || form.email).replace(/[^a-zA-Z0-9]/g, '_');
+  // Legge il contatto esistente e aggiunge email se mancante
+  fbFetch(FB_URL + '/contacts/' + contactKey + '.json')
+    .then(function(r){ return r.json(); })
+    .then(function(existing){
+      var updated = existing || {};
+      if(form.nome || form.cognome) updated.name = ((form.nome||'') + ' ' + (form.cognome||'')).trim();
+      if(form.telefono) updated.phone = form.telefono;
+      if(form.email) updated.email = form.email;
+      updated.updatedAt = Date.now();
+      return fbFetch(FB_URL + '/contacts/' + contactKey + '.json', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updated)
+      });
+    })
+    .catch(function(){});
+}
+
+function syncFirebase() {
+  var syncEl = document.getElementById('syncStatus');
+  if(syncEl) syncEl.textContent = 'Sincronizzazione...';
+
+  // Sync only checkin forms from Firebase
+  fbFetch(FB_URL + '/checkins.json')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!data || typeof data !== 'object') {
+        if(syncEl) syncEl.textContent = '';
+        return;
+      }
+      var forms = [];
+      Object.keys(data).forEach(function(key){
+        var f = data[key];
+        if(f) { f.id = f.id || key; forms.push(f); }
+      });
+      forms.sort(function(a,b){ return (b.timestamp||0)-(a.timestamp||0); });
+      localStorage.setItem('checkin_forms', JSON.stringify(forms));
+      // Aggiorna contatti con email dal pre check-in
+      forms.forEach(function(f){ updateContactFromCheckin(f); });
+      renderCheckin();
+      if(syncEl) syncEl.textContent = 'Sincronizzato ' + new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    })
+    .catch(function(err){
+      console.warn('Checkin sync error:', err);
+      if(syncEl) syncEl.textContent = '';
+    });
+}
+
+
+// ══════════════════════════════════════════════
+// PIN LOGIN
+// ══════════════════════════════════════════════
+var PIN_CORRECT = '2408';   // ← cambia qui il PIN
+var PIN_KEY     = 'cm_pin_auth';
+var PIN_DAYS    = 7;
+var pinEntry    = '';
+
+function checkAuth() {
+  var stored = JSON.parse(localStorage.getItem(PIN_KEY)||'null');
+  if (stored && Date.now() < stored.expires) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    return true;
+  }
+  return false;
+}
+
+function pinPress(digit) {
+  if (pinEntry.length >= PIN_CORRECT.length) return;
+  pinEntry += digit;
+  updateDots();
+  if (pinEntry.length === PIN_CORRECT.length) {
+    setTimeout(checkPin, 200);
+  }
+}
+
+function pinDel() {
+  pinEntry = pinEntry.slice(0, -1);
+  updateDots();
+  document.getElementById('pinError').textContent = '';
+}
+
+function updateDots() {
+  for (var i = 0; i < PIN_CORRECT.length; i++) {
+    var dot = document.getElementById('pd'+i);
+    if (dot) dot.classList.toggle('filled', i < pinEntry.length);
+  }
+}
+
+function startApp() {
+  loadData();
+  renderAll();
+  loadMessageTemplates();
+  syncManualBookings();
+  syncFirebase();
+  setInterval(function(){
+    syncManualBookings();
+    syncFirebase();
+    syncOwnerCosts();
+    // Rinnova token Firebase se in scadenza
+    if (!getFbToken()) signInAnonymous(function(){});
+  }, 2*60*1000);
+}
+
+function checkPin() {
+  if (pinEntry === PIN_CORRECT) {
+    localStorage.setItem(PIN_KEY, JSON.stringify({expires: Date.now() + PIN_DAYS*24*60*60*1000}));
+    document.getElementById('loginScreen').classList.add('hidden');
+    signInAnonymous(function(token) {
+      if (!token) console.warn('Firebase Auth: token non ottenuto');
+      startApp();
+    });
+  } else {
+    document.getElementById('pinError').textContent = 'PIN errato, riprova';
+    pinEntry = '';
+    updateDots();
+    // Shake animation
+    var box = document.querySelector('.pin-dots');
+    box.style.animation = 'none';
+    setTimeout(function(){ box.style.animation = ''; }, 10);
+  }
+}
+
+// Support keyboard input
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('loginScreen').classList.contains('hidden')) return;
+  if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+  if (e.key === 'Backspace') pinDel();
+});
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function highlightBooking(bookingId) {
+  // Cerca la prenotazione in tutte le case e camere
+  var found = false;
+  HOUSES.forEach(function(h){
+    h.bookings.forEach(function(b){
+      if(String(b.id) === String(bookingId)) {
+        found = true;
+        // Apre il pannello della casa
+        var pbody = document.getElementById('pbody-'+h.id);
+        var ptog = document.getElementById('ptog-'+h.id);
+        if(pbody && !pbody.classList.contains('open')) {
+          pbody.classList.add('open');
+          if(ptog) ptog.classList.add('open');
+        }
+        // Scrolla alla prenotazione e la evidenzia
+        setTimeout(function(){
+          var rows = document.querySelectorAll('.bk-row');
+          rows.forEach(function(row){
+            if(row.innerHTML.indexOf(b.guest) !== -1 && row.innerHTML.indexOf(b.from) !== -1) {
+              row.style.background = 'var(--orange-bg)';
+              row.style.border = '1px solid var(--orange)';
+              row.style.borderRadius = '9px';
+              row.scrollIntoView({behavior:'smooth', block:'center'});
+              setTimeout(function(){ 
+                row.style.background = '';
+                row.style.border = '';
+              }, 4000);
+            }
+          });
+        }, 500);
+      }
+    });
+  });
+  if(!found) {
+    HOTEL.rooms.forEach(function(r){
+      r.bookings.forEach(function(b){
+        if(String(b.id) === String(bookingId)) {
+          found = true;
+          // Scrolla alla sezione hotel
+          var hotelSect = document.querySelector('.hotel-sect');
+          if(hotelSect) hotelSect.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+      });
+    });
+  }
+}
+
+function checkDeepLink() {
+  var hash = window.location.hash;
+  if(hash && hash.indexOf('bk-') !== -1) {
+    var bookingId = hash.replace('#bk-','');
+    highlightBooking(bookingId);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  // Close overlays on backdrop click
+  document.querySelectorAll('.overlay').forEach(function(el){
+    el.addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+  });
+  // Check PIN auth
+  if (checkAuth()) {
+    signInAnonymous(function(token) {
+      if (!token) console.warn('Firebase Auth: token non ottenuto');
+      startApp();
+      setTimeout(checkDeepLink, 1500);
+    });
+  }
+});
+</script>
+</body>
+</html>
