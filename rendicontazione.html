@@ -222,6 +222,7 @@ body.comm-mode .owner-only{display:none!important}
       <option value="q2">Q2 — Apr/Mag/Giu</option>
       <option value="q3">Q3 — Lug/Ago/Set</option>
       <option value="q4">Q4 — Ott/Nov/Dic</option>
+      <option value="annual">Annuale</option>
     </select>
     <select class="month-sel" id="selMonth" onchange="loadRecords()">
       <option value="01">Gennaio</option><option value="02">Febbraio</option>
@@ -563,8 +564,98 @@ function onViewModeChange(){
   var mode = document.getElementById('viewMode').value;
   var monthSel = document.getElementById('selMonth');
   if(mode==='month'){ monthSel.style.display='inline-block'; loadRecords(); }
+  else if(mode==='annual'){ monthSel.style.display='none'; loadAnnual(); }
   else { monthSel.style.display='none'; loadQuarter(mode); }
 }
+
+function loadAnnual(){
+  var y = new Date().getFullYear();
+  var allMonths = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+  var lbl = document.getElementById('syncLbl');
+  if(lbl) lbl.textContent = 'Caricamento anno...';
+  document.getElementById('recordsList').innerHTML = '<div class="loading">Caricamento anno '+y+'...</div>';
+  var promises = allMonths.map(function(m){
+    var sheet = m+'-'+y;
+    return fetch(SCRIPT_URL+'?action=getRecords&mese='+encodeURIComponent(sheet))
+      .then(function(r){return r.json();})
+      .then(function(d){return {mese:m, records:d.success?d.records:[]};})
+      .catch(function(){return {mese:m, records:[]};});
+  });
+  Promise.all(promises).then(function(results){
+    records = [];
+    results.forEach(function(r){ records=records.concat(r.records); });
+    renderAnnual(results, y);
+    if(lbl) lbl.textContent = 'Anno '+y+' caricato';
+  });
+}
+
+var monthNames = ['Gennaio','Febbraio','ožujak','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+var monthNamesIT = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+function renderAnnual(results, y){
+  var vis = visibleRecords();
+  var totEnt  = vis.filter(function(r){return r.tipo==='entrata';}).reduce(function(s,r){return s+(parseFloat(r.importo)||0);},0);
+  var totCosti= vis.filter(function(r){return r.tipo==='costo';}).reduce(function(s,r){return s+(parseFloat(r.importo)||0);},0);
+  var delta   = totEnt - totCosti;
+  var conFoto = vis.filter(function(r){return r.fotoUrl&&r.fotoUrl!=='';}).length;
+
+  document.getElementById('sEnt').textContent        = euro(totEnt);
+  document.getElementById('sCosti').textContent      = euro(totCosti);
+  document.getElementById('sEntCount').textContent   = vis.filter(function(r){return r.tipo==='entrata';}).length+' voci';
+  document.getElementById('sCostiCount').textContent = vis.filter(function(r){return r.tipo==='costo';}).length+' voci';
+  document.getElementById('sUtile').textContent      = euro(delta);
+  document.getElementById('sUtile').style.color      = delta>=0?'var(--green)':'var(--red)';
+  document.getElementById('sFoto').textContent       = conFoto;
+  document.getElementById('recordsTitle').textContent = '📅 Anno '+y+' — Progressivo';
+
+  // Costruisce tabella mensile
+  var rows = results.map(function(res){
+    var vis2 = currentRole==='comm' ? res.records.filter(function(r){return !isPrivata(r);}) : res.records;
+    var ent  = vis2.filter(function(r){return r.tipo==='entrata';}).reduce(function(s,r){return s+(parseFloat(r.importo)||0);},0);
+    var cos  = vis2.filter(function(r){return r.tipo==='costo';}).reduce(function(s,r){return s+(parseFloat(r.importo)||0);},0);
+    var del  = ent - cos;
+    var mIdx = parseInt(res.mese)-1;
+    return {mese:monthNamesIT[mIdx], ent:ent, cos:cos, del:del, count:vis2.length};
+  }).filter(function(r){return r.count>0;});
+
+  if(!rows.length){
+    document.getElementById('recordsList').innerHTML='<div class="empty">Nessuna voce per il '+y+'</div>';
+    return;
+  }
+
+  var progressivo = 0;
+  var tableRows = rows.map(function(r){
+    progressivo += r.del;
+    return '<tr>'+
+      '<td style="font-weight:600;color:var(--navy)">'+r.mese+'</td>'+
+      '<td style="color:var(--green);font-weight:600">'+euro(r.ent)+'</td>'+
+      '<td style="color:var(--red);font-weight:600">'+euro(r.cos)+'</td>'+
+      '<td style="font-weight:700;color:'+(r.del>=0?'var(--green)':'var(--red)')+'">'+euro(r.del)+'</td>'+
+      '<td style="font-weight:700;color:'+(progressivo>=0?'var(--navy)':'var(--red)')+'">'+euro(progressivo)+'</td>'+
+    '</tr>';
+  }).join('');
+
+  document.getElementById('recordsList').innerHTML =
+    '<div style="padding:20px">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+      '<thead><tr style="background:var(--navy);color:#fff">'+
+        '<th style="padding:10px 14px;text-align:left;border-radius:8px 0 0 0">Mese</th>'+
+        '<th style="padding:10px 14px;text-align:right">Entrate</th>'+
+        '<th style="padding:10px 14px;text-align:right">Costi</th>'+
+        '<th style="padding:10px 14px;text-align:right">Delta mese</th>'+
+        '<th style="padding:10px 14px;text-align:right;border-radius:0 8px 0 0">Progressivo</th>'+
+      '</tr></thead>'+
+      '<tbody>'+tableRows+'</tbody>'+
+      '<tfoot><tr style="background:var(--off);border-top:2px solid var(--border)">'+
+        '<td style="padding:10px 14px;font-weight:700;color:var(--navy)">TOTALE '+y+'</td>'+
+        '<td style="padding:10px 14px;text-align:right;font-weight:700;color:var(--green)">'+euro(totEnt)+'</td>'+
+        '<td style="padding:10px 14px;text-align:right;font-weight:700;color:var(--red)">'+euro(totCosti)+'</td>'+
+        '<td style="padding:10px 14px;text-align:right;font-weight:700;color:'+(delta>=0?'var(--green)':'var(--red)')+'">'+euro(delta)+'</td>'+
+        '<td style="padding:10px 14px;text-align:right;font-weight:700;color:'+(delta>=0?'var(--navy)':'var(--red)')+'">'+euro(delta)+'</td>'+
+      '</tr></tfoot>'+
+    '</table>'+
+    '</div>';}
+
 
 function loadQuarter(q){
   var months = quarterMonths[q];
@@ -777,6 +868,7 @@ function closeViewer(){ document.getElementById('imgViewer').classList.remove('o
 function getExportLabel(){
   var mode = document.getElementById('viewMode').value;
   var y = new Date().getFullYear();
+  if(mode==='annual') return 'Anno_'+y;
   var qNames = {q1:'Q1_Gen-Mar',q2:'Q2_Apr-Giu',q3:'Q3_Lug-Set',q4:'Q4_Ott-Dic'};
   if(mode !== 'month') return qNames[mode]+'_'+y;
   var months=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
@@ -786,6 +878,7 @@ function getExportLabel(){
 function getExportTitle(){
   var mode = document.getElementById('viewMode').value;
   var y = new Date().getFullYear();
+  if(mode==='annual') return 'Anno '+y+' — Progressivo';
   var qNames = {q1:'Q1 — Gen/Feb/Mar',q2:'Q2 — Apr/Mag/Giu',q3:'Q3 — Lug/Ago/Set',q4:'Q4 — Ott/Nov/Dic'};
   if(mode !== 'month') return qNames[mode]+' '+y;
   var months=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
