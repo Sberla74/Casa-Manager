@@ -132,12 +132,13 @@ body {
   max-width: 680px; margin: 0 auto;
 }
 #msgInput {
-  flex: 1; background: #f0f0f0; border: none;
+  flex: 1; background: #fff; border: 2px solid #2d6a7f;
   border-radius: 100px; padding: 0.7rem 1rem;
   font-family: "DM Sans",sans-serif; font-size: 0.92rem;
   color: #2a2a2a; outline: none;
 }
-#msgInput::placeholder { color: #aaa; }
+#msgInput::placeholder { color: #666; }
+#inputHint { font-size:0.75rem; font-weight:700; color:#2d6a7f; margin-bottom:0.35rem; padding:0 0.2rem; }
 #sendBtn {
   background: #2d6a7f; color: white; border: none;
   border-radius: 50%; width: 2.3rem; height: 2.3rem;
@@ -227,6 +228,7 @@ body {
 <div id="chatArea">
   <div id="conversation"></div>
   <div id="inputBar">
+    <div id="inputHint">💬 Scrivi qui la tua domanda</div>
     <div class="inner">
       <input type="text" id="msgInput" autocomplete="off">
       <button id="sendBtn" onclick="sendMsg()">➤</button>
@@ -408,6 +410,7 @@ function setLang(lang) {
 
   // placeholder
   document.getElementById('msgInput').placeholder = t.placeholder;
+  document.getElementById('inputHint').textContent = lang==='it' ? '💬 Scrivi qui la tua domanda' : '💬 Write your question here';
 }
 
 function openAlert() {
