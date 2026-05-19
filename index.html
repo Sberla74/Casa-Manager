@@ -416,6 +416,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
         <div id="syncEventsStatus" style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center"></div>
       </div>
     </div>
+
+    <!-- SYNC GOOGLE CALENDAR -->
+    <div class="sb-card">
+      <div class="sb-hd">📅 Google Calendar</div>
+      <div class="sb-bd">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">Crea gli eventi check-in/check-out su Google Calendar per tutte le prenotazioni future. Esegui una volta sola.</div>
+        <button onclick="syncCalendarAll()" id="syncCalBtn" style="width:100%;padding:9px;border-radius:9px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border:none;cursor:pointer">📅 Sincronizza calendario</button>
+        <div id="syncCalStatus" style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center"></div>
+      </div>
+    </div>
   </div>
   </div>
 
@@ -643,13 +653,49 @@ function createCalendarEvents(booking, struttura) {
   fetch(CAL_SCRIPT_URL, {
     method: 'POST',
     body: JSON.stringify({
-      action:   'createBookingEvents',
-      nome:     booking.guest || 'Ospite',
+      action:    'createBookingEvents',
+      nome:      booking.guest || 'Ospite',
       struttura: struttura,
-      checkin:  booking.from,
-      checkout: booking.to
+      checkin:   booking.from,
+      checkout:  booking.to
     })
   }).catch(function(err){ console.warn('Calendar sync error:', err); });
+}
+
+function syncCalendarAll() {
+  var today = td();
+  var bookings = [];
+  HOUSES.forEach(function(h){
+    h.bookings.forEach(function(b){
+      if(b.to > today) bookings.push({b:b, struttura: h.name});
+    });
+  });
+  HOTEL.rooms.forEach(function(r){
+    r.bookings.forEach(function(b){
+      if(b.to > today) bookings.push({b:b, struttura: 'Hotel San Bart – Camera ' + r.name});
+    });
+  });
+  if(!bookings.length){ document.getElementById('syncCalStatus').textContent = 'Nessuna prenotazione futura trovata.'; return; }
+  var btn = document.getElementById('syncCalBtn');
+  var status = document.getElementById('syncCalStatus');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sincronizzazione...';
+  status.textContent = '0 / ' + bookings.length + ' inviati';
+  var i = 0;
+  function next() {
+    if(i >= bookings.length){
+      btn.disabled = false;
+      btn.textContent = '📅 Sincronizza calendario';
+      status.textContent = '✓ ' + bookings.length + ' prenotazioni sincronizzate!';
+      return;
+    }
+    var item = bookings[i];
+    createCalendarEvents(item.b, item.struttura);
+    i++;
+    status.textContent = i + ' / ' + bookings.length + ' inviati';
+    setTimeout(next, 600);
+  }
+  next();
 }
 
 // ══════════════════════════════════════════════
