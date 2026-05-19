@@ -635,6 +635,24 @@ function setVal(id,v) { var e=document.getElementById(id); if(e)e.value=v||''; }
 function setTxt(id,v) { var e=document.getElementById(id); if(e)e.textContent=v||'—'; }
 
 // ══════════════════════════════════════════════
+// GOOGLE CALENDAR (Apps Script)
+// ══════════════════════════════════════════════
+var CAL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMM_WBiJZBwvU_-vCsEM8Z4uHyTqnNc8jEX1McaQOyKmTI8FsH3qmiI60yEo-difw/exec';
+
+function createCalendarEvents(booking, struttura) {
+  fetch(CAL_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action:   'createBookingEvents',
+      nome:     booking.guest || 'Ospite',
+      struttura: struttura,
+      checkin:  booking.from,
+      checkout: booking.to
+    })
+  }).catch(function(err){ console.warn('Calendar sync error:', err); });
+}
+
+// ══════════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════════
 var BK_KEY = 'cm_bk_v3';
@@ -1092,7 +1110,7 @@ function saveBk() {
   if(bid){var b=h.bookings.find(function(x){return String(x.id)===String(bid);});if(b)Object.assign(b,obj);}
   else{obj.id=Date.now();h.bookings.push(obj);}
   saveData();
-  if(isNew) { writeBookingEvent(obj, h.name, 'casa'); writeContact(obj, h.name); }
+  if(isNew) { writeBookingEvent(obj, h.name, 'casa'); writeContact(obj, h.name); createCalendarEvents(obj, h.name); }
   closeOverlay('mBooking'); renderAll(); toast('✓ Prenotazione salvata');
 }
 
@@ -1229,7 +1247,7 @@ function saveRBk() {
   if(bid){var b=r.bookings.find(function(x){return String(x.id)===String(bid);});if(b)Object.assign(b,obj);}
   else{obj.id=Date.now();r.bookings.push(obj);}
   saveData();
-  if(isNew) { writeBookingEvent(obj, 'Hotel San Bart - ' + r.name, 'hotel'); writeContact(obj, 'Hotel San Bart'); }
+  if(isNew) { writeBookingEvent(obj, 'Hotel San Bart - ' + r.name, 'hotel'); writeContact(obj, 'Hotel San Bart'); createCalendarEvents(obj, 'Hotel San Bart – Camera ' + r.name); }
   closeOverlay('mRoomBk'); openRoomModal(rid); renderAll(); toast('✓ Prenotazione salvata');
 }
 
