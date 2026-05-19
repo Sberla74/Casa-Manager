@@ -91,6 +91,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
 .ore-del{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--off);cursor:pointer;font-size:12px;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .ore-del:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
 .ore-empty-msg{text-align:center;padding:14px;color:var(--text3);font-size:12px}
+
+/* NOTA COLAZIONE */
+.col-textarea{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--off);outline:none;resize:vertical;min-height:80px;box-sizing:border-box;margin-bottom:10px}
+.col-textarea:focus{border-color:var(--navy2);background:var(--white)}
+.col-toast{font-size:13px;color:var(--green);font-weight:600;min-height:20px;margin-bottom:8px;text-align:center}
 </style>
 </head>
 <body>
@@ -143,6 +148,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
       <button class="ore-save" onclick="saveOre()">✓ Registra</button>
       <hr class="ore-divider">
       <div id="oreList"><div class="ore-empty-msg">Nessuna registrazione questo mese</div></div>
+    </div>
+  </div>
+
+  <!-- NOTA COLAZIONE -->
+  <div class="ore-panel">
+    <div class="ore-hdr">
+      <div class="ore-hdr-title">☕ Cosa manca</div>
+      <button class="ore-toggle" id="colToggleBtn" onclick="toggleColazionePanel()">▲ Chiudi</button>
+    </div>
+    <div class="ore-body" id="colazioneBody">
+      <textarea id="colNota" class="col-textarea" placeholder="Scrivi cosa manca per la colazione…"></textarea>
+      <div class="ore-fg" style="margin-bottom:10px">
+        <label>Data</label>
+        <input id="colData" type="date">
+      </div>
+      <div class="col-toast" id="colToast"></div>
+      <button class="ore-save" id="colSaveBtn" onclick="saveNotaColazione()">☕ Invia a Google Calendar</button>
     </div>
   </div>
 
@@ -352,6 +374,39 @@ function row(lbl, val) {
   return '<div class="event-row"><span class="event-lbl">'+lbl+'</span><span class="event-val">'+val+'</span></div>';
 }
 
+// ── NOTA COLAZIONE → GOOGLE CALENDAR ──
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPjEokfGTkWB9FvcpVzolJ9J-SV61tgljJFRvx6kyvuSUVZBa-8s1zf27dtJ7lSoV0/exec';
+var colazionePanelOpen = true;
+
+function toggleColazionePanel(){
+  colazionePanelOpen = !colazionePanelOpen;
+  document.getElementById('colazioneBody').style.display = colazionePanelOpen ? 'block' : 'none';
+  document.getElementById('colToggleBtn').textContent = colazionePanelOpen ? '▲ Chiudi' : '▼ Apri';
+}
+
+function saveNotaColazione(){
+  var nota = document.getElementById('colNota').value.trim();
+  var data = document.getElementById('colData').value;
+  if(!nota){ alert('Scrivi cosa manca prima di inviare'); return; }
+  if(!data){ alert('Inserisci la data'); return; }
+  var btn = document.getElementById('colSaveBtn');
+  var toast = document.getElementById('colToast');
+  btn.textContent = '⏳ Invio...'; btn.disabled = true;
+  toast.textContent = '';
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({action: 'createColazioneEvent', nota: nota, data: data})
+  })
+  .then(function(r){ return r.text(); })
+  .then(function(){
+    document.getElementById('colNota').value = '';
+    toast.textContent = '✓ Evento aggiunto al calendario!';
+    setTimeout(function(){ toast.textContent = ''; }, 4000);
+  })
+  .catch(function(){ alert('Errore di invio. Riprova.'); })
+  .finally(function(){ btn.textContent = '☕ Invia a Google Calendar'; btn.disabled = false; });
+}
+
 // ── ORE STAFF ──
 var oreEntries = [];
 var orePanelOpen = true;
@@ -450,7 +505,9 @@ function deleteOre(btn){
 
 // ── INIT ──
 signInAnonymous(function(){
-  document.getElementById('oreData').value = new Date().toISOString().split('T')[0];
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('oreData').value = today;
+  document.getElementById('colData').value = today;
   loadBookings();
   loadOre();
 });
