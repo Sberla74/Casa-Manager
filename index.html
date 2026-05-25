@@ -1645,27 +1645,25 @@ function copyStaffLink(lid) {
 // ══════════════════════════════════════════════
 // MESSAGGI TEMPLATES
 // ══════════════════════════════════════════════
-var MSG_KEYS = ['welcome','guide','precheckin','arrival','verify','checkout','review','lastminute'];
+var MSG_KEYS = ['welcome','precheckin','arrival','verify','checkout','review','lastminute'];
 
 var MSG_LABELS_IT = {
   welcome:    '1. Benvenuto (dopo prenotazione)',
-  guide:      '2. Guida soggiorno (7 gg prima)',
-  precheckin: '3. Pre check-in (giorno prima)',
-  arrival:    '4. Istruzioni arrivo (giorno arrivo)',
-  verify:     '5. Verifica soggiorno (48h dopo)',
-  checkout:   '6. Orario check-out (sera prima)',
-  review:     '7. Richiesta recensione (dopo partenza)',
-  lastminute: '8. Last minute (unico messaggio)'
+  precheckin: '2. Pre check-in (giorno prima)',
+  arrival:    '3. Istruzioni arrivo + Guida (giorno arrivo)',
+  verify:     '4. Verifica soggiorno (48h dopo)',
+  checkout:   '5. Orario check-out (sera prima)',
+  review:     '6. Richiesta recensione (dopo partenza)',
+  lastminute: '7. Last minute (unico messaggio)'
 };
 var MSG_LABELS_EN = {
   welcome:    '1. Welcome (after booking)',
-  guide:      '2. Stay guide (7 days before)',
-  precheckin: '3. Pre check-in (day before)',
-  arrival:    '4. Arrival instructions (arrival day)',
-  verify:     '5. Stay check (48h after)',
-  checkout:   '6. Check-out time (evening before)',
-  review:     '7. Review request (after departure)',
-  lastminute: '8. Last minute (single message)'
+  precheckin: '2. Pre check-in (day before)',
+  arrival:    '3. Arrival instructions + Guide (arrival day)',
+  verify:     '4. Stay check (48h after)',
+  checkout:   '5. Check-out time (evening before)',
+  review:     '6. Review request (after departure)',
+  lastminute: '7. Last minute (single message)'
 };
 
 var PROPERTIES_MSG = [
@@ -1693,20 +1691,18 @@ function getPropId(propertyName) {
 function makeDefaultMsgs(propLabel) {
   return {
     it: {
-      welcome:    'Ciao {guest}! Sono Fabrizio, manager di ' + propLabel + '.\n\nLa tua prenotazione e confermata:\nCheck-in: {checkIn}\nCheck-out: {checkOut}\nNotti: {nights}\n\nTra 7 giorni riceverai la guida completa.\n\nA presto,\nFabrizio',
-      guide:      'Ciao {guest}! Manca una settimana al tuo arrivo a ' + propLabel + '.\n\nEcco la guida per il tuo soggiorno:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nA presto,\nFabrizio',
+      welcome:    'Ciao {guest}! Sono Fabrizio, manager di ' + propLabel + '.\n\nLa tua prenotazione e confermata:\nCheck-in: {checkIn}\nCheck-out: {checkOut}\nNotti: {nights}\n\nA presto,\nFabrizio',
       precheckin: 'Ciao {guest}! Domani arrivi a ' + propLabel + '.\n\nCompila il modulo pre check-in:\nhttps://sberla74.github.io/Casa-Manager/checkin\n\nA domani!\nFabrizio',
-      arrival:    'Ciao {guest}! Benvenuto a ' + propLabel + '.\n\nCome raggiungerci:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nBuon soggiorno!\nFabrizio',
+      arrival:    'Ciao {guest}! Benvenuto a ' + propLabel + '.\n\nEcco la guida completa del tuo soggiorno:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nCome raggiungerci:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nBuon soggiorno!\nFabrizio',
       verify:     'Ciao {guest}! Come sta andando il soggiorno a ' + propLabel + '?\n\nTutto ok? Hai bisogno di qualcosa?\n\nFabrizio',
       checkout:   'Ciao {guest}! Domani e il tuo ultimo giorno a ' + propLabel + '.\n\nA che ora prevedi il check-out?\n\nGrazie,\nFabrizio',
       review:     'Ciao {guest}! Grazie per aver soggiornato a ' + propLabel + '.\n\nCi farebbe piacere una tua recensione:\nhttps://google.com\n\nA presto!\nFabrizio',
       lastminute:  'Ciao {guest}! Sono Fabrizio, manager di ' + propLabel + '.\n\nBenvenuto! La tua prenotazione e confermata:\nCheck-in: {checkIn} - Check-out: {checkOut}\n\nEcco la tua guida soggiorno:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nCome raggiungerci:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nBuon soggiorno!\nFabrizio'
     },
     en: {
-      welcome:    'Hi {guest}! I am Fabrizio, manager of ' + propLabel + '.\n\nYour booking is confirmed:\nCheck-in: {checkIn}\nCheck-out: {checkOut}\nNights: {nights}\n\nOne week before arrival you will receive the complete guide.\n\nSee you soon,\nFabrizio',
-      guide:      'Hi {guest}! One week to go before your arrival at ' + propLabel + '.\n\nHere is your stay guide:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nBest,\nFabrizio',
+      welcome:    'Hi {guest}! I am Fabrizio, manager of ' + propLabel + '.\n\nYour booking is confirmed:\nCheck-in: {checkIn}\nCheck-out: {checkOut}\nNights: {nights}\n\nSee you soon,\nFabrizio',
       precheckin: 'Hi {guest}! Tomorrow you arrive at ' + propLabel + '.\n\nPlease fill in the pre check-in form:\nhttps://sberla74.github.io/Casa-Manager/checkin\n\nSee you tomorrow!\nFabrizio',
-      arrival:    'Hi {guest}! Welcome to ' + propLabel + '.\n\nHow to find us:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nEnjoy your stay!\nFabrizio',
+      arrival:    'Hi {guest}! Welcome to ' + propLabel + '.\n\nHere is your complete stay guide:\nhttps://link-guida-' + propLabel.toLowerCase().replace(/ /g,'-') + '.it\n\nHow to find us:\nhttps://maps.google.com/?q=' + propLabel.replace(/ /g,'+') + '\n\nEnjoy your stay!\nFabrizio',
       verify:     'Hi {guest}! Hope you are enjoying your stay at ' + propLabel + '.\n\nIs everything ok? Need anything?\n\nFabrizio',
       checkout:   'Hi {guest}! Tomorrow is your last day at ' + propLabel + '.\n\nWhat time are you planning to check out?\n\nThank you,\nFabrizio',
       review:     'Hi {guest}! Thank you for staying at ' + propLabel + '.\n\nWe would appreciate a review:\nhttps://google.com\n\nHope to see you again!\nFabrizio',
@@ -1829,13 +1825,12 @@ function applyTemplate(template, data) {
 // ══════════════════════════════════════════════
 var MSG_BTN_LABELS = {
   welcome:    '1. Benvenuto',
-  guide:      '2. Guida soggiorno',
-  precheckin: '3. Pre check-in',
-  arrival:    '4. Istruzioni arrivo',
-  verify:     '5. Verifica soggiorno',
-  checkout:   '6. Orario check-out',
-  review:     '7. Richiesta recensione',
-  lastminute: '⚡ 8. Last minute'
+  precheckin: '2. Pre check-in',
+  arrival:    '3. Istruzioni arrivo + Guida',
+  verify:     '4. Verifica soggiorno',
+  checkout:   '5. Orario check-out',
+  review:     '6. Richiesta recensione',
+  lastminute: '⚡ 7. Last minute'
 };
 
 var copyMsgBooking = null;
