@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Villa Giò — Guida Ospiti</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; font-family:"DM Sans",sans-serif; background:#fff; color:#2a2a2a; }
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* FOTO */
+.photo-wrap {
+  position: relative;
+  width: 100%;
+  height: 45vh;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e8d5f5 0%, #8a5fa8 55%, #4a2d6a 100%);
+}
+.photo-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.photo-wrap img:not([src]), .photo-wrap img[src=""] { display: none; }
+
+/* SELETTORE LINGUA */
+.lang-bar {
+  position: absolute;
+  top: 0.75rem; right: 0.75rem;
+  display: flex; gap: 0.4rem; z-index: 10;
+}
+.lang-btn {
+  background: rgba(255,255,255,0.93);
+  border: 2px solid transparent;
+  border-radius: 100px;
+  padding: 0.28rem 0.65rem;
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; color: #444;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  transition: all 0.15s;
+}
+.lang-btn.active { border-color: #8a5fa8; color: #8a5fa8; }
+
+/* BANNER BENVENUTO */
+#welcomeBanner {
+  background: #2a2a2a;
+  color: white;
+  text-align: center;
+  padding: 1rem 1.25rem;
+  font-size: clamp(0.85rem, 3.2vw, 1rem);
+  font-weight: 300;
+  line-height: 1.55;
+  flex-shrink: 0;
+}
+#welcomeBanner .alert-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 100px;
+  padding: 0.32rem 0.85rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* CHAT */
+#chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#conversation {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.85rem 0.9rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.msg.user { display:flex; justify-content:flex-end; }
+.msg.user .bubble {
+  background: #8a5fa8; color: white;
+  border-radius: 1.1rem 1.1rem 0.15rem 1.1rem;
+  padding: 0.65rem 0.95rem;
+  max-width: 80%; font-size: 0.9rem; line-height: 1.5;
+}
+.msg.bot .bubble {
+  background: white; color: #2a2a2a;
+  border-radius: 1.1rem 1.1rem 1.1rem 0.15rem;
+  padding: 0.75rem 1rem;
+  max-width: 88%; font-size: 0.9rem; line-height: 1.6;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+.msg.bot .bubble strong { color: #8a5fa8; }
+.msg.bot .bubble a { color: #8a5fa8; text-decoration: underline; }
+.msg-time { font-size: 0.62rem; color: #bbb; margin-top: 0.2rem; padding: 0 0.15rem; }
+.msg.user .msg-time { text-align: right; }
+
+.typing-dots { display:flex; gap:4px; padding:0.1rem 0; }
+.typing-dots span { width:7px; height:7px; background:#ccc; border-radius:50%; animation:bounce 1.2s infinite; }
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}
+
+/* INPUT */
+#inputBar {
+  background: white;
+  border-top: 1px solid #e8e8e8;
+  padding: 0.65rem 0.9rem;
+  flex-shrink: 0;
+}
+#inputBar .inner {
+  display: flex; gap: 0.5rem; align-items: center;
+  max-width: 680px; margin: 0 auto;
+}
+#msgInput {
+  flex: 1; background: #fff; border: 2px solid #8a5fa8;
+  border-radius: 100px; padding: 0.7rem 1rem;
+  font-family: "DM Sans",sans-serif; font-size: 0.92rem;
+  color: #2a2a2a; outline: none;
+}
+#msgInput::placeholder { color: #666; }
+#inputHint { font-size:0.75rem; font-weight:700; color:#8a5fa8; margin-bottom:0.35rem; padding:0 0.2rem; }
+#sendBtn {
+  background: #8a5fa8; color: white; border: none;
+  border-radius: 50%; width: 2.3rem; height: 2.3rem;
+  font-size: 0.95rem; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+#sendBtn:hover { background: #a47dc0; }
+#sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* POPUP */
+#alertOverlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+#alertOverlay.open { display: flex; }
+.alert-box {
+  background: white; border-radius: 1.4rem;
+  padding: 1.6rem 1.4rem;
+  max-width: 400px; width: 100%;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+}
+.alert-box h3 {
+  font-size: 1.05rem; font-weight: 600;
+  text-align: center; margin-bottom: 1rem;
+}
+.alert-row {
+  display: flex; gap: 0.65rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.9rem;
+  margin-bottom: 0.65rem;
+}
+.alert-row.sand { background: #fff5f5; }
+.alert-row.energy { background: #fffbf0; margin-bottom: 1.1rem; }
+.alert-row .ico { font-size: 1.3rem; flex-shrink: 0; }
+.alert-row p { font-size: 0.85rem; line-height: 1.5; color: #333; }
+.alert-row p strong { display: block; margin-bottom: 0.15rem; color: #1a1a1a; }
+#alertCloseBtn {
+  width: 100%; background: #8a5fa8; color: white;
+  border: none; border-radius: 100px; padding: 0.8rem;
+  font-family: "DM Sans",sans-serif; font-size: 0.92rem;
+  font-weight: 500; cursor: pointer;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg { animation: fadeUp 0.28s ease both; }
+</style>
+</head>
+<body>
+
+<!-- FOTO -->
+<div class="photo-wrap">
+  <img src="" alt="Villa Giò">
+  <div class="lang-bar">
+    <button id="btnIT" class="lang-btn active" onclick="setLang('it')">ITA</button>
+    <button id="btnEN" class="lang-btn" onclick="setLang('en')">ENG</button>
+  </div>
+</div>
+
+<div id="welcomeBanner"></div>
+
+<div id="alertOverlay" onclick="if(event.target.id==='alertOverlay')closeAlert()">
+  <div class="alert-box">
+    <h3 id="alertTitle"></h3>
+    <div class="alert-row sand">
+      <div class="ico">🚿</div>
+      <p><strong id="alertT1"></strong><span id="alertB1"></span></p>
+    </div>
+    <div class="alert-row energy">
+      <div class="ico">⚡</div>
+      <p><strong id="alertT2"></strong><span id="alertB2"></span></p>
+    </div>
+    <button id="alertCloseBtn" onclick="closeAlert()"></button>
+  </div>
+</div>
+
+<div id="chatArea">
+  <div id="conversation"></div>
+  <div id="inputBar">
+    <div id="inputHint"></div>
+    <div class="inner">
+      <input id="msgInput" type="text" autocomplete="off">
+      <button id="sendBtn" onclick="sendMsg()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── FIREBASE ──────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyC5u2VAYDuPIdOXlSXFMS6ozT0glc7cA-g",
+  authDomain: "casa-manager-24414.firebaseapp.com",
+  databaseURL: "https://casa-manager-24414-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "casa-manager-24414",
+  storageBucket: "casa-manager-24414.firebasestorage.app",
+  messagingSenderId: "1045479577088",
+  appId: "1:1045479577088:web:2462037ec454372e966ae5"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const sessionRef = db.ref("guide_chat/villa_gio/" + sessionId);
+let sessionStarted = false;
+
+function logFB(role, text) {
+  sessionRef.push({ role, text, ts: new Date().toISOString() }).catch(()=>{});
+  if (!sessionStarted) {
+    sessionStarted = true;
+    sessionRef.update({ property:"villa_gio", started_at: new Date().toISOString() }).catch(()=>{});
+  }
+}
+
+// ── SYSTEM PROMPT ─────────────────────────────────────
+const SYSTEM = `Sei l'assistente virtuale della casa vacanze "Villa Giò" a Sampieri, Sicilia.
+Rispondi sempre in modo cordiale, breve e utile. Rileva la lingua del messaggio e rispondi nella stessa lingua (italiano o inglese).
+Quando fornisci link Google Maps, scrivili come link HTML cliccabili nel formato: <a href="URL">Nome Luogo</a>
+
+CASA:
+- Posizione: <a href="https://maps.app.goo.gl/denKYMPabkrsHi5n8">Villa Giò, Sampieri — Apri in Maps</a>
+- Contatto Fabrizio (host): +39 349 006 9083 (WhatsApp)
+
+WIFI: [da aggiungere — chiedi a Fabrizio]
+
+CHECK-IN: Arrivo dalle 15:00. Check-in di persona, self check-in su richiesta. Per orari diversi contattare Fabrizio in anticipo.
+
+CHECK-OUT: Partenza entro le 10:00.
+Arrivederci e a presto! Il tempo vola quando ci si diverte! Ti ricordiamo che il check-out è previsto entro le 10:00. Per aiutarci a preparare la casa per i prossimi ospiti, vi chiediamo gentilmente di:
+- Un ultimo sguardo: Controlla di non aver dimenticato oggetti personali (caricabatterie, occhiali, ecc.)
+- Cura della casa: Lascia la cucina in ordine e porta via gli ultimi sacchetti della spazzatura
+- Sicurezza e Risparmio: Assicurati che luci e aria condizionata siano spente, e che porte e finestre siano ben chiuse
+- Le chiavi: Puoi lasciarle semplicemente sul tavolo
+- Un saluto: Manda un breve messaggio a Fabrizio (+39 349 006 9083) quando siete pronti a partire
+Grazie di cuore per essere stati nostri ospiti e buon viaggio!
+
+PARCHEGGIO: Fronte villa, sotto l'albero.
+
+PROBLEMI NOTI:
+1. SABBIA: sciacquare i piedi alle fontanelle esterne prima della doccia
+2. BLACKOUT: non usare forno+AC+lavatrice+boiler insieme. Il contatore ENEL si trova vicino ai bidoni della spazzatura, in fondo di fronte alla casa. Rialzare le leve se scatta.
+
+REGOLE: No sabbia nelle docce. No fumo interno (consentito in veranda/giardino). Animali con autorizzazione. No feste senza accordo.
+
+SPAZZATURA: Porta i bidoni in fondo di fronte alla casa la sera prima del ritiro. Dopo il ritiro mattutino, rimettili in posizione.
+LUNEDI: Organico + Vetro | MARTEDI: Carta + Pannolini | MERCOLEDI: Plastica + Pannolini | GIOVEDI: Organico + Lattine | VENERDI: Indifferenziata | SABATO: Organico + Pannolini
+
+SUPERMERCATI:
+- Despar Sampieri — Via Cipro 6 — tel. 0932 939221
+
+COLAZIONE E GELATO:
+- <a href="https://hokypoky.it/">Hoky Poky</a> — gelateria artigianale siciliana, Via Miramare 4, +39 320 838 9932 (granite, cremolate, pasticceria)
+
+RISTORANTI SAMPIERI: quando un ospite chiede genericamente dove mangiare senza specificare il tipo (es. "dove mangio?", "un posto carino"), fai UNA sola domanda:
+"Cosa ti piacerebbe provare?
+🍽️ Ristorante
+🐟 Pesce fresco
+🍕 Pizzeria
+🍹 Aperitivo"
+Se invece l'ospite menziona già una preferenza specifica (es. "pesce", "pizza", "trattoria", "aperitivo"), rispondi direttamente senza fare domande.
+Per spiaggia attrezzata con lettini e ombrelloni, La Spiaggetta è la scelta ideale.
+
+RISTORANTI SAMPIERI:
+- <a href="https://calabistrot.com/">Cala Bistrot</a> — cucina mediterranea, sapori del mare
+- <a href="https://share.google/t4CxfvJEFFfbukPbo">Rabbuso Trattoria di Mare</a> — pesce fresco
+- <a href="https://www.patapatasampieri.com/services">Pata Pata</a> — cucina fusion italiano/giapponese, Via Miramare SNC — tel. 0932 1846510
+- <a href="https://la-spiaggetta.it/">La Spiaggetta</a> — bar e pizzeria sul mare — +39 350 058 2175
+
+RISTORANTI SCICLI:
+- Le Gioie (+39 340 547 9265) — trattoria cucina tipica familiare
+- <a href="https://maps.app.goo.gl/KpYK7HSCdHD35mv46">La Grotta</a> (+39 0932 931363) — location suggestiva, cibo raffinato
+- <a href="https://maps.app.goo.gl/bJvdEpjLGVK84DwQ9">Prosit</a> (+39 0932 842028) — Sicilian bistrot
+- <a href="https://maps.app.goo.gl/T779yVgpvc9TRXKn7">Baqqala</a> (+39 0932 931028) — pesce fresco
+- Osteria 3 Colli (+39 0932 931605) — trattoria
+- Lievito Madre (+39 0932 185 7276) — trattoria e pizzeria
+- <a href="https://maps.app.goo.gl/RyRynxMH5ob7xb4r8">Granifero</a> (+39 0932 188 1697) — pizzeria contemporanea
+- Busacca (+39 392 066 5613) — ristorante, pizzeria e lounge bar
+- <a href="https://maps.app.goo.gl/Ey9y2MyEjyQQH4bT9">Antico Caffè Gritti</a> — granite
+- Candiano — gelateria artigianale
+
+NUMERI UTILI:
+- Transfer e noleggio auto: Carmine +39 328 415 1840
+
+EMERGENZE:
+- 112 Carabinieri | 118 Ambulanza | 115 Pompieri
+- <a href="https://maps.app.goo.gl/7kJBCyTaukZaG7GM8">Ospedale di Scicli</a> — 0932 446111
+- <a href="https://maps.app.goo.gl/jEsMYd3qmQsBum9G6">Ospedale di Modica</a>
+- <a href="https://maps.app.goo.gl/VkiTZZBB3WCwCi3Z7">Ospedale di Ragusa</a>
+
+LUOGHI DA VISITARE: Scicli, Modica, Ragusa Ibla, Noto, Siracusa/Ortigia, Riserva Naturale di Vendicari
+
+TRASPORTI:
+- Transfer/noleggio: Carmine +39 328 415 1840
+- Aeroporto Catania: ~90 min | Aeroporto Comiso: ~40 min
+
+Se non conosci la risposta a una domanda, rispondi con: "Non ho questa informazione, ma puoi chiedere direttamente a Fabrizio: <a href='https://wa.me/393490069083'>💬 WhatsApp</a>"
+Rispondi in modo conciso. Includi sempre i link HTML cliccabili quando disponibili.`;
+
+// ── LINGUE ────────────────────────────────────────────
+const T = {
+  it: {
+    bannerText: "Benvenuti a Villa Giò! Sono il vostro assistente virtuale.",
+    alertLink:  "⚠️ Prima di iniziare, clicca qui",
+    afterAlert: "Perfetto, allora diamo inizio alla tua vacanza! 🌺 Come posso aiutarti?",
+    placeholder:"Scrivi un messaggio...",
+    alertTitle: "⚠️ Due cose importanti",
+    t1: "SABBIA", b1: " Ti chiediamo di sciacquare i piedi alle fontanelle esterne prima di entrare in doccia. La sabbia ostruisce gli scarichi e potrebbe causare disagi durante il soggiorno.",
+    t2: "ENERGIA", b2: " Per evitare blackout, non utilizzare troppi elettrodomestici contemporaneamente (forno, aria condizionata, lavatrice, boiler). Il contatore ENEL è vicino ai bidoni della spazzatura.",
+    closeBtn: "Ho capito ✓"
+  },
+  en: {
+    bannerText: "Welcome to Villa Giò! I'm your virtual assistant.",
+    alertLink:  "⚠️ Important info before you start",
+    afterAlert: "Perfect, let's start your holiday! 🌺 How can I help you?",
+    placeholder:"Type a message...",
+    alertTitle: "⚠️ Two important things",
+    t1: "SAND", b1: " Please rinse your feet at the outdoor taps before using the shower. Sand can block the drains and cause problems during your stay.",
+    t2: "ENERGY", b2: " To avoid power cuts, please do not use too many appliances at the same time (oven, air conditioning, washing machine, water boiler). The ENEL meter is near the rubbish bins.",
+    closeBtn: "Got it ✓"
+  }
+};
+
+let currentLang = 'it';
+let bannerConfirmed = false;
+
+function setLang(lang) {
+  currentLang = lang;
+  const t = T[lang];
+
+  document.getElementById('btnIT').className = 'lang-btn' + (lang==='it'?' active':'');
+  document.getElementById('btnEN').className = 'lang-btn' + (lang==='en'?' active':'');
+
+  if (!bannerConfirmed) {
+    const b = document.getElementById('welcomeBanner');
+    b.innerHTML = t.bannerText +
+      '<br><span class="alert-link" onclick="openAlert()">' + t.alertLink + '</span>';
+  }
+
+  document.getElementById('msgInput').placeholder = t.placeholder;
+  document.getElementById('inputHint').textContent = lang==='it' ? '💬 Scrivi qui la tua domanda' : '💬 Write your question here';
+}
+
+function openAlert() {
+  const t = T[currentLang];
+  document.getElementById('alertTitle').textContent = t.alertTitle;
+  document.getElementById('alertT1').textContent = t.t1;
+  document.getElementById('alertB1').textContent = t.b1;
+  document.getElementById('alertT2').textContent = t.t2;
+  document.getElementById('alertB2').textContent = t.b2;
+  document.getElementById('alertCloseBtn').textContent = t.closeBtn;
+  document.getElementById('alertOverlay').classList.add('open');
+}
+
+function closeAlert() {
+  document.getElementById('alertOverlay').classList.remove('open');
+  bannerConfirmed = true;
+  document.getElementById('welcomeBanner').innerHTML = T[currentLang].afterAlert;
+  document.getElementById('welcomeBanner').dataset.confirmed = '1';
+}
+
+// ── CHAT ──────────────────────────────────────────────
+let chatHistory = [];
+
+function mdToHtml(text) {
+  return text
+    .replace(/[*][*](.+?)[*][*]/g, '<strong>$1</strong>')
+    .replace(/[*](.+?)[*]/g, '<em>$1</em>')
+    .split('\n').join('<br>');
+}
+
+function nowStr() {
+  return new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+}
+
+function addMsg(role, html) {
+  const conv = document.getElementById('conversation');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  const bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.innerHTML = role==='bot' ? mdToHtml(html) : html;
+  const t = document.createElement('div');
+  t.className = 'msg-time';
+  t.textContent = nowStr();
+  wrap.appendChild(bub);
+  wrap.appendChild(t);
+  conv.appendChild(wrap);
+  setTimeout(() => conv.scrollTop = conv.scrollHeight, 40);
+}
+
+function showTyping() {
+  const conv = document.getElementById('conversation');
+  const d = document.createElement('div');
+  d.className = 'msg bot'; d.id = 'typing';
+  d.innerHTML = '<div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>';
+  conv.appendChild(d);
+  setTimeout(() => conv.scrollTop = conv.scrollHeight, 40);
+}
+function hideTyping() { const t=document.getElementById('typing'); if(t)t.remove(); }
+
+async function sendMsg() {
+  const inp = document.getElementById('msgInput');
+  const btn = document.getElementById('sendBtn');
+  const text = inp.value.trim();
+  if (!text) return;
+
+  const banner = document.getElementById('welcomeBanner');
+  if (banner) banner.style.display = 'none';
+
+  inp.value = ''; btn.disabled = true;
+  addMsg('user', text);
+  chatHistory.push({role:'user', content:text});
+  logFB('user', text);
+  showTyping();
+
+  try {
+    const res = await fetch('https://trainer-ai-proxy.f-lonatica.workers.dev', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 600,
+        system: SYSTEM + '\n\nRispondi SEMPRE in ' + (currentLang === 'it' ? 'italiano' : 'English') + '.',
+        messages: chatHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Mi dispiace, non sono riuscito a rispondere. Contatta Fabrizio su WhatsApp.';
+    hideTyping();
+    addMsg('bot', reply);
+    chatHistory.push({role:'assistant', content:reply});
+    logFB('assistant', reply);
+  } catch(e) {
+    hideTyping();
+    addMsg('bot', 'Connessione non disponibile. Contatta Fabrizio: <a href="https://wa.me/393490069083">WhatsApp</a>');
+  }
+  btn.disabled = false;
+  inp.focus();
+}
+
+document.getElementById('msgInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMsg();
+});
+
+// ── INIT ──────────────────────────────────────────────
+setLang('it');
+</script>
+</body>
+</html>
