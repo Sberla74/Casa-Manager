@@ -923,6 +923,34 @@ function submitForm() {
     '<p style="margin-top:8px;font-size:12px;color:#8aa0bc">Inviato il ' + new Date().toLocaleString('it-IT') + ' — ID: ' + data.id + '</p>' +
     '</div></div>';
 
+  // ── Mostra schermata di attesa: "Puoi chiudere" appare solo dopo invio completo ──
+  document.getElementById('step4').classList.remove('active');
+  var screen = document.getElementById('successScreen');
+  screen.classList.add('show');
+  var nFoto = docPhotos.length;
+  screen.innerHTML = '<div class="success-icon" style="font-size:48px">⏳</div>' +
+    '<div class="success-title">Invio in corso...</div>' +
+    '<div style="color:var(--text2);font-size:14px;margin-top:8px">' +
+    (nFoto > 0 ? 'Invio documenti (' + nFoto + ' foto)...' : 'Invio dati in corso...') +
+    '</div>' +
+    '<div style="color:var(--text3);font-size:12px;margin-top:16px">Non chiudere questa pagina.</div>';
+  window.scrollTo(0, 0);
+  updateProgress(5);
+
+  function showSuccessScreen() {
+    var successSub = t('successSub').replace('{nome}', data.nome).replace('{ora}', data.arrivoOra||'15:00');
+    screen.innerHTML = '<div class="success-icon">✅</div>' +
+      '<div class="success-title">' + t('successTitle') + '</div>' +
+      '<div class="success-sub">' + successSub + '</div>' +
+      '<div class="success-card">' +
+        '<div class="success-row"><span class="success-key">Nome</span><span class="success-val">'+data.nome+' '+data.cognome+'</span></div>' +
+        '<div class="success-row"><span class="success-key">Ospiti</span><span class="success-val">'+adulti+' adulti'+(bambini?' + '+bambini+' bambini':'')+'</span></div>' +
+        '<div class="success-row"><span class="success-key">Arrivo previsto</span><span class="success-val">'+data.arrivoOra+'</span></div>' +
+        '<div class="success-row"><span class="success-key">Documenti</span><span class="success-val">'+data.docPhotosCount+' foto caricata/e</span></div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text3);margin-top:16px;line-height:1.6">Puoi chiudere questa pagina.</div>';
+  }
+
   // ── SEND EMAIL 1: DATI ──
   emailjs.send('service_1wgvohb', 'template_kdcpf8r', {
     casa: data.casa,
@@ -932,6 +960,12 @@ function submitForm() {
   })
   .then(function() {
     console.log('Email dati inviata');
+    if (docPhotos.length === 0) {
+      showSuccessScreen();
+      return;
+    }
+    var sentCount = 0;
+    var totalPhotos = docPhotos.length;
     // ── SEND EMAIL 2+: una per ogni foto ──
     docPhotos.forEach(function(p, i) {
       var fotoHtml =
@@ -950,33 +984,23 @@ function submitForm() {
           cognome: 'Doc ' + (i+1),
           message: fotoHtml
         })
-        .then(function(){ console.log('Foto ' + (i+1) + ' inviata'); })
-        .catch(function(e){ console.warn('Errore foto ' + (i+1) + ':', e); });
-      }, (i+1) * 1500); // 1.5s di intervallo tra le email
+        .then(function() {
+          console.log('Foto ' + (i+1) + ' inviata');
+          sentCount++;
+          if (sentCount >= totalPhotos) showSuccessScreen();
+        })
+        .catch(function(e) {
+          console.warn('Errore foto ' + (i+1) + ':', e);
+          sentCount++;
+          if (sentCount >= totalPhotos) showSuccessScreen();
+        });
+      }, (i+1) * 1500);
     });
   })
   .catch(function(err) {
     console.warn('EmailJS error:', err);
+    showSuccessScreen(); // i dati sono già salvati su Firebase
   });
-
-  // Show success screen immediately (non bloccare l'utente)
-  document.getElementById('step4').classList.remove('active');
-  var screen = document.getElementById('successScreen');
-  screen.classList.add('show');
-  var successSub = t('successSub').replace('{nome}', data.nome).replace('{ora}', data.arrivoOra||'15:00');
-  screen.innerHTML = '<div class="success-icon">✅</div>' +
-    '<div class="success-title">' + t('successTitle') + '</div>' +
-    '<div class="success-sub">' + successSub + '</div>' +
-    '<div class="success-card">' +
-      '<div class="success-row"><span class="success-key">Nome</span><span class="success-val">'+data.nome+' '+data.cognome+'</span></div>' +
-      '<div class="success-row"><span class="success-key">Ospiti</span><span class="success-val">'+adulti+' adulti'+(bambini?' + '+bambini+' bambini':'')+'</span></div>' +
-      '<div class="success-row"><span class="success-key">Arrivo previsto</span><span class="success-val">'+data.arrivoOra+'</span></div>' +
-      '<div class="success-row"><span class="success-key">Documenti</span><span class="success-val">'+data.docPhotosCount+' foto caricata/e</span></div>' +
-    '</div>' +
-    '<div style="font-size:12px;color:var(--text3);margin-top:16px;line-height:1.6">Puoi chiudere questa pagina.</div>';
-
-  window.scrollTo(0,0);
-  updateProgress(5);
 }
 
 function toast(msg) {
