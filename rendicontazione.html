@@ -457,8 +457,6 @@ var pinEntry = '';
 function checkAuth(){
   var s  = JSON.parse(localStorage.getItem(PIN_KEY)||'null');
   if(s  && Date.now()<s.expires){  setRole('owner'); document.getElementById('loginScreen').classList.add('hidden'); return true; }
-  var sc = JSON.parse(localStorage.getItem(PIN_KEY_COMM)||'null');
-  if(sc && Date.now()<sc.expires){ setRole('comm');  document.getElementById('loginScreen').classList.add('hidden'); return true; }
   return false;
 }
 function pinPress(d){ if(pinEntry.length>=4)return; pinEntry+=d; updateDots(); if(pinEntry.length===4)setTimeout(checkPin,200); }
