@@ -370,6 +370,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
       <div class="cal-grid" id="calGrid"></div>
     </div>
 
+    <!-- EVENTI GUIDE AI -->
+    <div style="margin-top:16px;background:var(--white);border-radius:14px;border:1px solid var(--border);padding:16px 20px;box-shadow:0 2px 16px rgba(13,43,78,.06)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+        <span>🗓️ Eventi Guide AI</span>
+        <span id="eventiCount" style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-size:12px"></span>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <input class="fi" id="evTitolo" type="text" placeholder="Titolo evento" style="flex:2;min-width:160px">
+        <input class="fi" id="evData" type="text" placeholder="es. Sabato 21 giugno" style="flex:1;min-width:130px">
+        <input class="fi" id="evLuogo" type="text" placeholder="Luogo" style="flex:1;min-width:100px">
+        <input class="fi" id="evDesc" type="text" placeholder="Breve descrizione (opzionale)" style="flex:3;min-width:180px">
+        <button onclick="addEventoManuale()" style="padding:9px 18px;border-radius:9px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border:none;cursor:pointer;white-space:nowrap">+ Aggiungi</button>
+      </div>
+      <div id="eventiList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    </div>
+
   </div>
 
   <!-- SIDEBAR -->
@@ -426,6 +442,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
         <div id="syncCalStatus" style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center"></div>
       </div>
     </div>
+
   </div>
   </div>
 
@@ -2494,6 +2511,7 @@ function startApp() {
   loadMessageTemplates();
   syncManualBookings();
   syncFirebase();
+  loadEventiAdmin();
   setInterval(function(){
     // Rinnova token Firebase PRIMA di fare i sync
     if (!getFbToken()) {
@@ -2608,6 +2626,71 @@ window.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// ── EVENTI GUIDE AI ───────────────────────────────────────────
+
+function loadEventiAdmin() {
+  db.ref('eventi_settimanali/current').once('value').then(snap => {
+    const data = snap.val() || { settimana: '', eventi: [] };
+    const eventi = data.eventi || [];
+    const count = document.getElementById('eventiCount');
+    if (count) count.textContent = eventi.length ? '(' + eventi.length + ')' : '';
+    const list = document.getElementById('eventiList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (eventi.length === 0) {
+      list.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px 0">Nessun evento questa settimana</div>';
+      return;
+    }
+    eventi.forEach((ev, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'background:var(--off);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;min-width:200px;max-width:320px;flex:1';
+      row.innerHTML =
+        '<div><strong style="color:var(--navy);font-size:13px">' + ev.titolo + '</strong>' +
+        '<div style="color:var(--text2);margin-top:3px;font-size:11px">' + ev.data + ' · ' + ev.luogo + '</div>' +
+        (ev.descrizione ? '<div style="color:var(--text3);margin-top:2px;font-size:11px">' + ev.descrizione + '</div>' : '') +
+        '</div>' +
+        '<button onclick="deleteEventoManuale(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;flex-shrink:0;line-height:1">✕</button>';
+      list.appendChild(row);
+    });
+  }).catch(() => {});
+}
+
+function addEventoManuale() {
+  const titolo = document.getElementById('evTitolo').value.trim();
+  const data   = document.getElementById('evData').value.trim();
+  const luogo  = document.getElementById('evLuogo').value.trim();
+  const desc   = document.getElementById('evDesc').value.trim();
+  if (!titolo || !data || !luogo) { showToast('Compila almeno titolo, data e luogo'); return; }
+
+  db.ref('eventi_settimanali/current').once('value').then(snap => {
+    const current = snap.val() || { settimana: '', eventi: [] };
+    if (!current.eventi) current.eventi = [];
+    current.eventi.push({ titolo, data, luogo, descrizione: desc, categoria: 'manuale' });
+    current.aggiornato_il = new Date().toISOString();
+    return db.ref('eventi_settimanali/current').set(current);
+  }).then(() => {
+    document.getElementById('evTitolo').value = '';
+    document.getElementById('evData').value = '';
+    document.getElementById('evLuogo').value = '';
+    document.getElementById('evDesc').value = '';
+    loadEventiAdmin();
+    showToast('Evento aggiunto ✓');
+  }).catch(() => showToast('Errore nel salvataggio'));
+}
+
+function deleteEventoManuale(index) {
+  db.ref('eventi_settimanali/current').once('value').then(snap => {
+    const current = snap.val();
+    if (!current || !current.eventi) return;
+    current.eventi.splice(index, 1);
+    current.aggiornato_il = new Date().toISOString();
+    return db.ref('eventi_settimanali/current').set(current);
+  }).then(() => {
+    loadEventiAdmin();
+    showToast('Evento rimosso');
+  }).catch(() => {});
+}
 </script>
 </body>
 </html>
