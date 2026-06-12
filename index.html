@@ -376,26 +376,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
         <span>🗓️ Eventi Guide AI</span>
         <span id="eventiCount" style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-size:12px"></span>
       </div>
-      <div style="display:flex;gap:20px;align-items:flex-start">
-        <!-- Form aggiunta -->
-        <div style="flex:0 0 340px;background:var(--off);border-radius:10px;padding:14px 16px">
-          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Aggiungi evento</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <input class="fi" id="evTitolo" type="text" placeholder="Titolo evento *">
-            <div style="display:flex;gap:8px">
-              <input class="fi" id="evData" type="text" placeholder="Data (es. Sab 21 giu)" style="flex:1">
-              <input class="fi" id="evLuogo" type="text" placeholder="Luogo *" style="flex:1">
-            </div>
-            <input class="fi" id="evDesc" type="text" placeholder="Descrizione (opzionale)">
-            <button onclick="addEventoManuale()" style="margin-top:2px;padding:10px;border-radius:9px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border:none;cursor:pointer">+ Aggiungi evento</button>
+      <!-- Form aggiunta -->
+      <div style="background:var(--off);border-radius:10px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Aggiungi evento manuale</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input class="fi" id="evTitolo" type="text" placeholder="Titolo evento *">
+          <div style="display:flex;gap:8px">
+            <input class="fi" id="evData" type="text" placeholder="Data (es. Sab 21 giu)" style="flex:1">
+            <input class="fi" id="evLuogo" type="text" placeholder="Luogo *" style="flex:1">
           </div>
-        </div>
-        <!-- Lista eventi -->
-        <div style="flex:1">
-          <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Questa settimana</div>
-          <div id="eventiList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          <input class="fi" id="evDesc" type="text" placeholder="Descrizione (opzionale)">
+          <button onclick="addEventoManuale()" style="margin-top:2px;padding:10px;border-radius:9px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border:none;cursor:pointer">+ Aggiungi evento</button>
         </div>
       </div>
+      <!-- Lista eventi manuali -->
+      <div id="eventiList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
     </div>
 
   </div>
@@ -2646,7 +2641,8 @@ function loadEventiAdmin() {
     .then(function(r){ return r.json(); })
     .then(function(data) {
       data = data || { settimana: '', eventi: [] };
-      var eventi = data.eventi || [];
+      var tutti = data.eventi || [];
+      var eventi = tutti.filter(function(e){ return e.categoria === 'manuale'; });
       var count = document.getElementById('eventiCount');
       if (count) count.textContent = eventi.length ? '(' + eventi.length + ')' : '';
       var list = document.getElementById('eventiList');
