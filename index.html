@@ -2642,66 +2642,79 @@ window.addEventListener('DOMContentLoaded', function() {
 // ── EVENTI GUIDE AI ───────────────────────────────────────────
 
 function loadEventiAdmin() {
-  db.ref('eventi_settimanali/current').once('value').then(snap => {
-    const data = snap.val() || { settimana: '', eventi: [] };
-    const eventi = data.eventi || [];
-    const count = document.getElementById('eventiCount');
-    if (count) count.textContent = eventi.length ? '(' + eventi.length + ')' : '';
-    const list = document.getElementById('eventiList');
-    if (!list) return;
-    list.innerHTML = '';
-    if (eventi.length === 0) {
-      list.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px 0">Nessun evento questa settimana</div>';
-      return;
-    }
-    eventi.forEach((ev, i) => {
-      const row = document.createElement('div');
-      row.style.cssText = 'background:var(--off);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;min-width:200px;max-width:320px;flex:1';
-      row.innerHTML =
-        '<div><strong style="color:var(--navy);font-size:13px">' + ev.titolo + '</strong>' +
-        '<div style="color:var(--text2);margin-top:3px;font-size:11px">' + ev.data + ' · ' + ev.luogo + '</div>' +
-        (ev.descrizione ? '<div style="color:var(--text3);margin-top:2px;font-size:11px">' + ev.descrizione + '</div>' : '') +
-        '</div>' +
-        '<button onclick="deleteEventoManuale(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;flex-shrink:0;line-height:1">✕</button>';
-      list.appendChild(row);
-    });
-  }).catch(() => {});
+  fetch(FB_URL + '/eventi_settimanali/current.json')
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+      data = data || { settimana: '', eventi: [] };
+      var eventi = data.eventi || [];
+      var count = document.getElementById('eventiCount');
+      if (count) count.textContent = eventi.length ? '(' + eventi.length + ')' : '';
+      var list = document.getElementById('eventiList');
+      if (!list) return;
+      list.innerHTML = '';
+      if (eventi.length === 0) {
+        list.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 0">Nessun evento questa settimana</div>';
+        return;
+      }
+      eventi.forEach(function(ev, i) {
+        var row = document.createElement('div');
+        row.style.cssText = 'background:var(--off);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;min-width:180px;max-width:300px;flex:1';
+        row.innerHTML =
+          '<div><strong style="color:var(--navy);font-size:13px">' + ev.titolo + '</strong>' +
+          '<div style="color:var(--text2);margin-top:3px;font-size:11px">' + ev.data + ' · ' + ev.luogo + '</div>' +
+          (ev.descrizione ? '<div style="color:var(--text3);margin-top:2px;font-size:11px">' + ev.descrizione + '</div>' : '') +
+          '</div>' +
+          '<button onclick="deleteEventoManuale(' + i + ')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;flex-shrink:0;line-height:1">✕</button>';
+        list.appendChild(row);
+      });
+    }).catch(function(){});
 }
 
 function addEventoManuale() {
-  const titolo = document.getElementById('evTitolo').value.trim();
-  const data   = document.getElementById('evData').value.trim();
-  const luogo  = document.getElementById('evLuogo').value.trim();
-  const desc   = document.getElementById('evDesc').value.trim();
-  if (!titolo || !data || !luogo) { toast('Compila almeno titolo, data e luogo'); return; }
+  var titolo = document.getElementById('evTitolo').value.trim();
+  var data   = document.getElementById('evData').value.trim();
+  var luogo  = document.getElementById('evLuogo').value.trim();
+  var desc   = document.getElementById('evDesc').value.trim();
+  if (!titolo || !data || !luogo) { toast('Compila titolo, data e luogo'); return; }
 
-  db.ref('eventi_settimanali/current').once('value').then(snap => {
-    const current = snap.val() || { settimana: '', eventi: [] };
-    if (!current.eventi) current.eventi = [];
-    current.eventi.push({ titolo, data, luogo, descrizione: desc, categoria: 'manuale' });
-    current.aggiornato_il = new Date().toISOString();
-    return db.ref('eventi_settimanali/current').set(current);
-  }).then(() => {
-    document.getElementById('evTitolo').value = '';
-    document.getElementById('evData').value = '';
-    document.getElementById('evLuogo').value = '';
-    document.getElementById('evDesc').value = '';
-    loadEventiAdmin();
-    toast('Evento aggiunto ✓');
-  }).catch(() => toast('Errore nel salvataggio'));
+  fetch(FB_URL + '/eventi_settimanali/current.json')
+    .then(function(r){ return r.json(); })
+    .then(function(current) {
+      current = current || { settimana: '', eventi: [] };
+      if (!current.eventi) current.eventi = [];
+      current.eventi.push({ titolo: titolo, data: data, luogo: luogo, descrizione: desc, categoria: 'manuale' });
+      current.aggiornato_il = new Date().toISOString();
+      return fetch(FB_URL + '/eventi_settimanali/current.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(current)
+      });
+    }).then(function() {
+      document.getElementById('evTitolo').value = '';
+      document.getElementById('evData').value = '';
+      document.getElementById('evLuogo').value = '';
+      document.getElementById('evDesc').value = '';
+      loadEventiAdmin();
+      toast('Evento aggiunto ✓');
+    }).catch(function(){ toast('Errore nel salvataggio'); });
 }
 
 function deleteEventoManuale(index) {
-  db.ref('eventi_settimanali/current').once('value').then(snap => {
-    const current = snap.val();
-    if (!current || !current.eventi) return;
-    current.eventi.splice(index, 1);
-    current.aggiornato_il = new Date().toISOString();
-    return db.ref('eventi_settimanali/current').set(current);
-  }).then(() => {
-    loadEventiAdmin();
-    toast('Evento rimosso');
-  }).catch(() => {});
+  fetch(FB_URL + '/eventi_settimanali/current.json')
+    .then(function(r){ return r.json(); })
+    .then(function(current) {
+      if (!current || !current.eventi) return;
+      current.eventi.splice(index, 1);
+      current.aggiornato_il = new Date().toISOString();
+      return fetch(FB_URL + '/eventi_settimanali/current.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(current)
+      });
+    }).then(function() {
+      loadEventiAdmin();
+      toast('Evento rimosso');
+    }).catch(function(){});
 }
 </script>
 </body>
