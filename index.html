@@ -2673,7 +2673,7 @@ function addEventoManuale() {
   const data   = document.getElementById('evData').value.trim();
   const luogo  = document.getElementById('evLuogo').value.trim();
   const desc   = document.getElementById('evDesc').value.trim();
-  if (!titolo || !data || !luogo) { showToast('Compila almeno titolo, data e luogo'); return; }
+  if (!titolo || !data || !luogo) { toast('Compila almeno titolo, data e luogo'); return; }
 
   db.ref('eventi_settimanali/current').once('value').then(snap => {
     const current = snap.val() || { settimana: '', eventi: [] };
@@ -2687,8 +2687,8 @@ function addEventoManuale() {
     document.getElementById('evLuogo').value = '';
     document.getElementById('evDesc').value = '';
     loadEventiAdmin();
-    showToast('Evento aggiunto ✓');
-  }).catch(() => showToast('Errore nel salvataggio'));
+    toast('Evento aggiunto ✓');
+  }).catch(() => toast('Errore nel salvataggio'));
 }
 
 function deleteEventoManuale(index) {
@@ -2700,7 +2700,7 @@ function deleteEventoManuale(index) {
     return db.ref('eventi_settimanali/current').set(current);
   }).then(() => {
     loadEventiAdmin();
-    showToast('Evento rimosso');
+    toast('Evento rimosso');
   }).catch(() => {});
 }
 </script>
