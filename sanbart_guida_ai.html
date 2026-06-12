@@ -253,6 +253,23 @@ function setLang(lang) {
   document.getElementById('inputHint').textContent = lang==='it' ? '💬 Scrivi qui la tua domanda' : '💬 Write your question here';
 }
 
+// ── EVENTI SETTIMANALI ────────────────────────────────
+let eventiBlock = '';
+
+async function loadEventi() {
+  try {
+    const snap = await db.ref('eventi_settimanali/current').once('value');
+    const data = snap.val();
+    if (data && data.eventi && data.eventi.length > 0) {
+      const lista = data.eventi.map(e =>
+        '• ' + e.data + ' — ' + e.titolo + ' (' + e.luogo + '): ' + e.descrizione
+      ).join('\n');
+      eventiBlock = '\n\nEVENTI QUESTA SETTIMANA (' + data.settimana + '):\n' + lista +
+        '\n\nSe l\'ospite chiede di eventi, cosa si fa, cosa c\'è in zona, usa queste informazioni rispondendo in modo utile e contestuale. Se chiede di una zona specifica, filtra gli eventi pertinenti.';
+    }
+  } catch(e) { /* silent fail */ }
+}
+
 let chatHistory = [];
 
 function mdToHtml(text) {
@@ -315,7 +332,7 @@ async function sendMsg() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
-        system: SYSTEM + '\n\nRispondi SEMPRE in ' + (currentLang === 'it' ? 'italiano' : 'English') + '.',
+        system: SYSTEM + eventiBlock + '\n\nRispondi SEMPRE in ' + (currentLang === 'it' ? 'italiano' : 'English') + '.',
         messages: chatHistory
       })
     });
@@ -337,6 +354,7 @@ document.getElementById('msgInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') sendMsg();
 });
 
+loadEventi();
 setLang('it');
 </script>
 </body>
