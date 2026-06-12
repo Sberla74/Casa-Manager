@@ -376,13 +376,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);fon
         <span>🗓️ Eventi Guide AI</span>
         <span id="eventiCount" style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0;font-size:12px"></span>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-        <input class="fi" id="evTitolo" type="text" placeholder="Titolo evento" style="flex:2;min-width:160px">
-        <input class="fi" id="evData" type="text" placeholder="es. Sabato 21 giugno" style="flex:1;min-width:130px">
-        <input class="fi" id="evLuogo" type="text" placeholder="Luogo" style="flex:1;min-width:100px">
-        <input class="fi" id="evDesc" type="text" placeholder="Breve descrizione (opzionale)" style="flex:3;min-width:180px">
+      <!-- Form aggiunta -->
+      <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr 2.5fr auto;gap:8px;margin-bottom:16px;align-items:center">
+        <input class="fi" id="evTitolo" type="text" placeholder="Titolo evento">
+        <input class="fi" id="evData" type="text" placeholder="es. Sabato 21 giugno">
+        <input class="fi" id="evLuogo" type="text" placeholder="Luogo">
+        <input class="fi" id="evDesc" type="text" placeholder="Breve descrizione (opzionale)">
         <button onclick="addEventoManuale()" style="padding:9px 18px;border-radius:9px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border:none;cursor:pointer;white-space:nowrap">+ Aggiungi</button>
       </div>
+      <!-- Lista eventi -->
       <div id="eventiList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
     </div>
 
