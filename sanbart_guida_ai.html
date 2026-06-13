@@ -153,6 +153,13 @@ RISTORANTI: quando un ospite chiede genericamente dove mangiare, fai UNA sola do
 🍕 Pizzeria
 🍹 Aperitivo"
 Se l'ospite menziona già una preferenza specifica, rispondi direttamente.
+Per l'APERITIVO rispondi SEMPRE con i locali di Scicli (sono a pochi passi dall'hotel). Suggerisci Donnalucata solo se l'ospite chiede esplicitamente il mare o la spiaggia.
+
+APERITIVO SCICLI (a pochi passi dall'hotel):
+- <a href="https://maps.google.com/?q=Via+Ispica+12+Scicli+RG">Spritz Point</a> — direttamente di fronte all'hotel, ideale per un aperitivo veloce
+- <a href="https://maps.google.com/?q=Corso+Umberto+I+Scicli+RG">A Funtana</a> — chiosco caratteristico sul corso
+- <a href="https://maps.google.com/?q=Via+Aleardi+36+Scicli+RG">My Name is Tannino</a> — wine bar
+- <a href="https://maps.app.goo.gl/hUAXAqjizNHsfm6G8">Busacca</a> (+39 392 066 5613) — lounge bar con cucina, Piazza Busacca
 
 RISTORANTI SCICLI:
 - <a href="https://maps.app.goo.gl/TZJJqvfVYYw3bsKS7">Le Gioie</a> (+39 340 547 9265) — trattoria cucina tipica familiare
@@ -332,7 +339,7 @@ async function sendMsg() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
-        system: SYSTEM + eventiBlock + '\n\nRispondi SEMPRE in ' + (currentLang === 'it' ? 'italiano' : 'English') + '.',
+        system: SYSTEM + '\n\nDATA ODIERNA: ' + new Date().toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) + '.' + eventiBlock + '\n\nRispondi SEMPRE in ' + (currentLang === 'it' ? 'italiano' : 'English') + '.',
         messages: chatHistory
       })
     });
