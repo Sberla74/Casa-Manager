@@ -521,7 +521,7 @@ async function sendMsg() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 600,
-        system: SYSTEM + eventiBlock + '\n\nRispondi SEMPRE in ' + (currentLang === 'it' ? 'italiano' : 'English') + '.',
+        system: SYSTEM + '\n\nDATA ODIERNA: ' + new Date().toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'}) + '.' + eventiBlock + '\n\nRispondi SEMPRE in ' + (currentLang === 'it' ? 'italiano' : 'English') + '.',
         messages: chatHistory
       })
     });
